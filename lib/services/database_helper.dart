@@ -30,7 +30,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _onCreate,
       onConfigure: _onConfigure,
       onUpgrade: _onUpgrade,
@@ -84,6 +84,9 @@ class DatabaseHelper {
     }
     if (oldVersion < 5) {
       await db.execute('ALTER TABLE topic_progress ADD COLUMN manual_strength TEXT');
+    }
+    if (oldVersion < 6) {
+      await db.execute('ALTER TABLE topic_revisions ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0');
     }
   }
 
@@ -186,6 +189,7 @@ class DatabaseHelper {
         scheduled_date TEXT NOT NULL,
         completed_date TEXT,
         interval_days INTEGER NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE
       )
     ''');
@@ -289,6 +293,16 @@ class DatabaseHelper {
     return result.map((json) => Subject.fromMap(json)).toList();
   }
 
+  Future<List<Map<String, dynamic>>> getAllSubjectsWithPaper() async {
+    final db = await instance.database;
+    return await db.rawQuery('''
+      SELECT s.*, p.code as paper_code, p.full_name as paper_name
+      FROM subjects s
+      JOIN papers p ON s.paper_id = p.id
+      ORDER BY p.sort_order ASC, s.sort_order ASC
+    ''');
+  }
+
   Future<Subject?> getSubjectById(int id) async {
     final db = await instance.database;
     final result = await db.query(
@@ -356,6 +370,18 @@ class DatabaseHelper {
       whereArgs: [subjectId],
       orderBy: 'sort_order ASC',
     );
+    return result.map((json) => Topic.fromMap(json)).toList();
+  }
+
+  /// Returns only topics that have revision entries (i.e. completed topics)
+  Future<List<Topic>> getTopicsWithRevisions(int subjectId) async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT DISTINCT t.* FROM topics t
+      INNER JOIN topic_revisions r ON t.id = r.topic_id
+      WHERE t.subject_id = ?
+      ORDER BY t.sort_order ASC
+    ''', [subjectId]);
     return result.map((json) => Topic.fromMap(json)).toList();
   }
 
@@ -540,7 +566,13 @@ class DatabaseHelper {
   // --- STUDY SESSION ---
   Future<int> addSession(StudySession session) async {
     final db = await instance.database;
-    return await db.insert('study_sessions', session.toMap());
+    final id = await db.insert('study_sessions', session.toMap());
+    // Increment revision attempt for this topic if a pending revision exists
+    await db.execute('''
+      UPDATE topic_revisions SET attempts = attempts + 1
+      WHERE topic_id = ? AND completed_date IS NULL
+    ''', [session.topicId]);
+    return id;
   }
 
   Future<List<StudySession>> getSessionsForTopic(int topicId) async {
@@ -708,6 +740,36 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [revision.id],
     );
+  }
+
+  Future<List<Map<String, dynamic>>> getAllRevisionsWithDetails({int? paperId}) async {
+    final db = await instance.database;
+    if (paperId != null) {
+      return await db.rawQuery('''
+        SELECT r.*, t.name as topic_name, t.chapter as chapter_name,
+               s.name as subject_name, p.code as paper_code
+        FROM topic_revisions r
+        JOIN topics t ON r.topic_id = t.id
+        JOIN subjects s ON t.subject_id = s.id
+        JOIN papers p ON s.paper_id = p.id
+        WHERE s.paper_id = ?
+        ORDER BY r.scheduled_date DESC
+      ''', [paperId]);
+    }
+    return await db.rawQuery('''
+      SELECT r.*, t.name as topic_name, t.chapter as chapter_name,
+             s.name as subject_name, p.code as paper_code
+      FROM topic_revisions r
+      JOIN topics t ON r.topic_id = t.id
+      JOIN subjects s ON t.subject_id = s.id
+      JOIN papers p ON s.paper_id = p.id
+      ORDER BY r.scheduled_date DESC
+    ''');
+  }
+
+  Future<void> incrementRevisionAttempt(int revisionId) async {
+    final db = await instance.database;
+    await db.execute('UPDATE topic_revisions SET attempts = attempts + 1 WHERE id = ?', [revisionId]);
   }
 
   Future<List<Map<String, dynamic>>> getPendingRevisionsOnDate(DateTime date) async {
@@ -1157,6 +1219,23 @@ class DatabaseHelper {
   }
 
   /// Returns per-subject strong/mid/weak counts for radar chart
+  Future<List<Map<String, dynamic>>> getAllSubjectsStrengthRadar() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT s.id, s.name as subject_name,
+        COUNT(t.id) as total,
+        SUM(CASE WHEN tp.status = 'completed' AND tp.manual_strength = 'strong' THEN 1 ELSE 0 END) as strong,
+        SUM(CASE WHEN tp.status = 'completed' AND tp.manual_strength = 'mid' THEN 1 ELSE 0 END) as mid,
+        SUM(CASE WHEN tp.status = 'completed' AND tp.manual_strength = 'weak' THEN 1 ELSE 0 END) as weak
+      FROM subjects s
+      LEFT JOIN topics t ON t.subject_id = s.id
+      LEFT JOIN topic_progress tp ON t.id = tp.topic_id
+      GROUP BY s.id
+      ORDER BY s.sort_order ASC
+    ''');
+    return result;
+  }
+
   Future<List<Map<String, dynamic>>> getSubjectStrengthRadar(int paperId) async {
     final db = await instance.database;
     // Only count completed topics with manual_strength labels
@@ -1209,6 +1288,29 @@ class DatabaseHelper {
       });
     }
     return details;
+  }
+
+  Future<int> getTotalCompletedTopicsAllPapers() async {
+    final db = await instance.database;
+    final result = await db.rawQuery("SELECT COUNT(*) as c FROM topic_progress WHERE status = 'completed'");
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<int> getTotalMockTestsAllPapers() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('SELECT COUNT(*) as c FROM mock_tests');
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<double> getAverageMockScoreAllPapers() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('SELECT COALESCE(SUM(marks_obtained), 0) as o, COALESCE(SUM(total_marks), 0) as t FROM mock_tests');
+    if (result.isNotEmpty) {
+      final o = (result.first['o'] as int?) ?? 0;
+      final t = (result.first['t'] as int?) ?? 0;
+      if (t > 0) return (o / t) * 100;
+    }
+    return 0.0;
   }
 
   String _todayDateStr() {

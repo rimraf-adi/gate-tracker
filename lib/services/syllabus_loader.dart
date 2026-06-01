@@ -31,11 +31,11 @@ class SyllabusLoader {
     int sortOrder = 0;
 
     if (paperCode == 'CSE') {
-      fullName = 'Computer Science & Information Technology';
+      fullName = 'CS-IT';
       assetPath = 'assets/cse.txt';
       sortOrder = 0;
     } else if (paperCode == 'ECE') {
-      fullName = 'Electronics & Comm. Engineering';
+      fullName = 'EC';
       assetPath = 'assets/ece.txt';
       sortOrder = 1;
     } else {

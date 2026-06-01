@@ -27,6 +27,11 @@ final subjectsByPaperProvider = FutureProvider.family<List<Subject>, int>((ref, 
   return await dbHelper.getSubjectsByPaper(paperId);
 });
 
+final allSubjectsWithPaperProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getAllSubjectsWithPaper();
+});
+
 // --- Subject Progress Provider (Completed / Total Topics) ---
 final subjectProgressProvider = FutureProvider.family<Map<String, int>, int>((ref, subjectId) async {
   final dbHelper = ref.watch(databaseHelperProvider);
@@ -81,8 +86,7 @@ class TopicProgressNotifier extends StateNotifier<ProgressStatus> {
     state = progress?.status ?? ProgressStatus.pending;
   }
 
-  Future<void> toggle({required int subjectId, required int paperId}) async {
-    // Simple 2-state toggle: pending ↔ completed
+  Future<void> toggle({required int subjectId, required int paperId, int? durationMinutes}) async {
     final nextStatus = state == ProgressStatus.pending
         ? ProgressStatus.completed
         : ProgressStatus.pending;
@@ -91,14 +95,22 @@ class TopicProgressNotifier extends StateNotifier<ProgressStatus> {
     final dbHelper = ref.read(databaseHelperProvider);
     await dbHelper.setProgress(topicId, nextStatus);
 
-    // Schedule 1st revision if marked as completed
-    if (nextStatus == ProgressStatus.completed) {
-      final revision = TopicRevision(
+    // Log study session if duration provided (comes from the merged dialog)
+    if (nextStatus == ProgressStatus.completed && durationMinutes != null && durationMinutes > 0) {
+      await dbHelper.addSession(StudySession(
         topicId: topicId,
-        scheduledDate: DateTime.now().add(const Duration(days: 1)),
-        intervalDays: 1,
-      );
-      await dbHelper.addRevision(revision);
+        date: DateTime.now(),
+        durationMinutes: durationMinutes,
+      ));
+    }
+
+    // Create revision entry when topic is completed
+    if (nextStatus == ProgressStatus.completed) {
+      await dbHelper.addRevision(TopicRevision(
+        topicId: topicId,
+        scheduledDate: DateTime.now(),
+        intervalDays: 0,
+      ));
     }
 
     // Invalidate related providers
@@ -108,11 +120,12 @@ class TopicProgressNotifier extends StateNotifier<ProgressStatus> {
     ref.invalidate(aggregateProgressProvider(paperId));
     ref.invalidate(weakTopicsProvider(paperId));
     ref.invalidate(studySessionHistoryProvider);
-    ref.invalidate(activityHeatmapProvider(DateTime.now().subtract(const Duration(days: 365))));
+    ref.invalidate(activityHeatmapProvider);
     ref.invalidate(totalStudyHoursProvider);
     ref.invalidate(totalStudySessionsCountProvider);
     ref.invalidate(currentStreakProvider);
     ref.invalidate(completedTopicsTodayProvider);
+    ref.invalidate(revisionHistoryProvider(paperId));
     ref.invalidate(totalCompletedTopicsProvider(paperId));
     ref.invalidate(completedSubjectsCountProvider(paperId));
   }
@@ -179,8 +192,9 @@ final calendarDayEventsProvider = FutureProvider.family<Map<String, dynamic>, St
 });
 
 // --- Heatmap Provider ---
-final activityHeatmapProvider = FutureProvider.family<Map<DateTime, int>, DateTime>((ref, startDate) async {
+final activityHeatmapProvider = FutureProvider<Map<DateTime, int>>((ref) async {
   final dbHelper = ref.watch(databaseHelperProvider);
+  final startDate = DateTime.now().subtract(const Duration(days: 365));
   return await dbHelper.getActivityHeatmapData(startDate);
 });
 
@@ -219,36 +233,39 @@ final subjectStrengthRadarProvider = FutureProvider.family<List<Map<String, dyna
   return await dbHelper.getSubjectStrengthRadar(paperId);
 });
 
+final allSubjectsStrengthProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getAllSubjectsStrengthRadar();
+});
+
+final allPapersCompletedTopicsProvider = FutureProvider<int>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getTotalCompletedTopicsAllPapers();
+});
+
+final allPapersMockCountProvider = FutureProvider<int>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getTotalMockTestsAllPapers();
+});
+
+final allPapersMockAvgProvider = FutureProvider<double>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getAverageMockScoreAllPapers();
+});
+
+final revisionHistoryProvider = FutureProvider.family<List<Map<String, dynamic>>, int>((ref, paperId) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getAllRevisionsWithDetails(paperId: paperId);
+});
+
 final studySessionHistoryProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final dbHelper = ref.watch(databaseHelperProvider);
   return await dbHelper.getAllSessionsWithDetails();
 });
 
-// --- Schedule Providers ---
-final scheduleForTodayProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final dbHelper = ref.watch(databaseHelperProvider);
-  return await dbHelper.getPendingScheduledEventsOnDate(DateTime.now());
-});
-
-final upcomingScheduleProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final dbHelper = ref.watch(databaseHelperProvider);
-  final today = DateTime.now();
-  final start = today.add(const Duration(days: 1));
-  final end = today.add(const Duration(days: 14));
-  return await dbHelper.getScheduledEventsInRange(start, end);
-});
-
-// --- Calendar/Home Screen Metric Providers ---
-// These replace raw FutureBuilder calls so metrics update reactively.
-
 final completedTopicsTodayProvider = FutureProvider<int>((ref) async {
   final dbHelper = ref.watch(databaseHelperProvider);
   return await dbHelper.getCompletedTopicsCountToday();
-});
-
-final scheduledEventsTodayCountProvider = FutureProvider<int>((ref) async {
-  final dbHelper = ref.watch(databaseHelperProvider);
-  return await dbHelper.getScheduledEventsForTodayCount();
 });
 
 final totalCompletedTopicsProvider = FutureProvider.family<int, int>((ref, paperId) async {
@@ -270,4 +287,7 @@ final completedSubjectsCountProvider = FutureProvider.family<int, int>((ref, pap
   final dbHelper = ref.watch(databaseHelperProvider);
   return await dbHelper.getCompletedSubjectsCount(paperId);
 });
+
+
+
 

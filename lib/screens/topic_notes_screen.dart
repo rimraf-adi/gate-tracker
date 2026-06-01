@@ -75,9 +75,9 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                             color: AppColors.lavenderPurple.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.note_add_rounded, color: AppColors.lavenderPurple, size: 24),
+                          child: Icon(Icons.note_add_rounded, color: AppColors.lavenderPurple, size: 24),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Text(
                           'Add Note',
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -87,31 +87,31 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     // Text field
                     TextField(
                       controller: textController,
                       maxLines: 5,
                       decoration: InputDecoration(
                         hintText: 'Write your note, annotation, or comment...',
-                        hintStyle: const TextStyle(color: Colors.black38),
+                        hintStyle: TextStyle(color: Colors.black38),
                         filled: true,
                         fillColor: AppColors.warmIvory.withValues(alpha: 0.5),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.small),
-                          borderSide: BorderSide(color: AppColors.lightGray.withValues(alpha: 0.5)),
+                          borderSide: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.small),
-                          borderSide: BorderSide(color: AppColors.lightGray.withValues(alpha: 0.5)),
+                          borderSide: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.small),
-                          borderSide: const BorderSide(color: AppColors.lavenderPurple, width: 1.5),
+                          borderSide: BorderSide(color: AppColors.lavenderPurple, width: 1.5),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     // Image preview
                     if (selectedImagePath != null) ...[
                       Stack(
@@ -140,13 +140,13 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                                   color: Colors.white70,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                child: Icon(Icons.close, color: Colors.white, size: 18),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                     ],
                     // Image picker buttons
                     Row(
@@ -169,7 +169,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                             }
                           },
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         _ImagePickerButton(
                           icon: Icons.camera_alt_rounded,
                           label: 'Camera',
@@ -190,17 +190,17 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     // Save / Cancel
                     Row(
                       children: [
                         Expanded(
                           child: TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                            child: Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -237,7 +237,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                                 );
                               }
                             },
-                            child: const Text('Save Note', style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: Text('Save Note', style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
                       ],
@@ -283,7 +283,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                         letterSpacing: -0.5,
                       ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 TextField(
                   controller: textController,
                   maxLines: 5,
@@ -293,24 +293,24 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                     fillColor: AppColors.warmIvory.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.small),
-                      borderSide: BorderSide(color: AppColors.lightGray.withValues(alpha: 0.5)),
+                      borderSide: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.small),
-                      borderSide: const BorderSide(color: AppColors.lavenderPurple, width: 1.5),
+                      borderSide: BorderSide(color: AppColors.lavenderPurple, width: 1.5),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Row(
                   children: [
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                        child: Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -333,7 +333,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                             Navigator.pop(context);
                           }
                         },
-                        child: const Text('Update', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text('Update', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -351,14 +351,14 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
-        title: const Text('Delete Note?'),
-        content: const Text('This action cannot be undone.'),
+        title: Text('Delete Note?'),
+        content: Text('This action cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -405,7 +405,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
     final notesAsync = ref.watch(topicNotesProvider(widget.topicId));
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -416,7 +416,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
             iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 48, bottom: 16),
-              title: const Text(
+              title: Text(
                 'Notes',
                 style: TextStyle(
                   color: Colors.white,
@@ -434,15 +434,15 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                       widget.topicName,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                         fontSize: 22,
                         letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                    SizedBox(height: 4),
+                    Text(
                       'Annotations, comments & images',
                       style: TextStyle(
                         color: Colors.white70,
@@ -459,9 +459,9 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
             child: Transform.translate(
               offset: const Offset(0, -24),
               child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.darkBackground,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(32),
                     topRight: Radius.circular(32),
                   ),
@@ -471,12 +471,12 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               // Notes list
               notesAsync.when(
                 data: (notes) {
                   if (notes.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -487,7 +487,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textGray,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                           SizedBox(height: 8),
@@ -519,7 +519,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                     },
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Error: $e')),
               ),
             ],
@@ -532,7 +532,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
   floatingActionButton: FloatingActionButton(
     backgroundColor: AppColors.neonPurple,
     onPressed: _showAddNoteSheet,
-    child: const Icon(Icons.add, color: AppColors.darkBackground),
+    child: Icon(Icons.add, color: Theme.of(context).scaffoldBackgroundColor),
   ),
 );
 }
@@ -559,7 +559,7 @@ class _NoteCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.darkSurface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         clipBehavior: Clip.antiAlias,
@@ -578,7 +578,7 @@ class _NoteCard extends StatelessWidget {
                   errorBuilder: (_, __, ___) => Container(
                     height: 100,
                     color: Colors.white10,
-                    child: const Center(
+                    child: Center(
                       child: Icon(Icons.broken_image_outlined, color: Colors.white24, size: 32),
                     ),
                   ),
@@ -595,19 +595,19 @@ class _NoteCard extends StatelessWidget {
                       note.content,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             height: 1.5,
-                            color: AppColors.textWhite,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                   ],
                   // Footer
                   Row(
                     children: [
-                      const Icon(Icons.access_time_rounded, size: 14, color: AppColors.textGray),
-                      const SizedBox(width: 4),
+                      Icon(Icons.access_time_rounded, size: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                      SizedBox(width: 4),
                       Text(
                         dateFormat.format(note.createdAt),
-                        style: const TextStyle(fontSize: 12, color: AppColors.textGray, fontWeight: FontWeight.w500),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
                       ),
                       const Spacer(),
                       GestureDetector(
@@ -618,7 +618,7 @@ class _NoteCard extends StatelessWidget {
                             color: AppColors.neonPurple.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.edit_outlined, size: 14, color: AppColors.neonPurple),
@@ -628,7 +628,7 @@ class _NoteCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       GestureDetector(
                         onTap: onDelete,
                         child: Container(
@@ -637,7 +637,7 @@ class _NoteCard extends StatelessWidget {
                             color: AppColors.neonOrange.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.delete_outline_rounded, size: 14, color: AppColors.neonOrange),
@@ -685,10 +685,10 @@ class _ImagePickerButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(icon, size: 20, color: AppColors.lavenderPurple),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.lavenderPurple,
                   ),

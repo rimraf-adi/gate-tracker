@@ -2,151 +2,136 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/providers.dart';
-import '../theme/app_theme.dart';
 
 class ActivityHeatmap extends ConsumerStatefulWidget {
-  final int weeksToDisplay;
-
-  const ActivityHeatmap({
-    super.key,
-    this.weeksToDisplay = 26, // approx 6 months
-  });
+  const ActivityHeatmap({super.key});
 
   @override
   ConsumerState<ActivityHeatmap> createState() => _ActivityHeatmapState();
 }
 
 class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
-  late DateTime _startDate;
-  late DateTime _endDate;
-  final ScrollController _scrollController = ScrollController();
+  late DateTime _viewMonth;
 
   @override
   void initState() {
     super.initState();
-    _endDate = DateTime.now();
-    // Move back by weeksToDisplay, then to the previous Sunday
-    final tempStart = _endDate.subtract(Duration(days: widget.weeksToDisplay * 7));
-    final daysToSubtract = tempStart.weekday % 7; // Sunday is 0 for our math
-    _startDate = tempStart.subtract(Duration(days: daysToSubtract));
-    
-    // Auto-scroll to the end after frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      }
-    });
+    _viewMonth = DateTime(DateTime.now().year, DateTime.now().month);
   }
 
-  Color _getColorForDuration(int durationMinutes) {
-    if (durationMinutes == 0) return AppColors.lightGray.withValues(alpha: 0.5);
-    if (durationMinutes < 30) return AppColors.limeGreen.withValues(alpha: 0.3);
-    if (durationMinutes < 60) return AppColors.limeGreen.withValues(alpha: 0.6);
-    if (durationMinutes < 120) return AppColors.limeGreen.withValues(alpha: 0.85);
-    return const Color(0xFF2E7D32); // Deep green
+  Color _colorForMinutes(int minutes) {
+    if (minutes == 0) return Colors.white.withValues(alpha: 0.06);
+    final hours = minutes / 60.0;
+    if (hours <= 0.5) return const Color(0xFF1A3A1A);
+    if (hours <= 1) return const Color(0xFF2E5A2E);
+    if (hours <= 2) return const Color(0xFF3D8B3D);
+    if (hours <= 4) return const Color(0xFF5CAD5C);
+    if (hours <= 8) return const Color(0xFF81C784);
+    return const Color(0xFFA5D6A7);
   }
 
   @override
   Widget build(BuildContext context) {
-    final heatmapAsync = ref.watch(activityHeatmapProvider(_startDate));
+    final heatmapAsync = ref.watch(activityHeatmapProvider);
+    final now = DateTime.now();
+    final canGoNext = _viewMonth.year < now.year || (_viewMonth.year == now.year && _viewMonth.month < now.month);
+    final daysInMonth = DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Study Activity (Last 6 Months)',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: Colors.white,
-          ),
+        // Header row with title + month navigation
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/full-heatmap'),
+              child: Text('Study Activity',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: canGoNext
+                  ? () => setState(() => _viewMonth = DateTime(_viewMonth.year, _viewMonth.month + 1))
+                  : null,
+              child: Icon(Icons.chevron_left_rounded, size: 20,
+                color: canGoNext ? Colors.white54 : Colors.white10),
+            ),
+            SizedBox(width: 4),
+            Text(DateFormat('MMM yyyy').format(_viewMonth),
+              style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+            SizedBox(width: 4),
+            GestureDetector(
+              onTap: () => setState(() => _viewMonth = DateTime(_viewMonth.year, _viewMonth.month - 1)),
+              child: Icon(Icons.chevron_right_rounded, size: 20, color: Colors.white54),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
-        heatmapAsync.when(
-          data: (data) {
-            // Build the grid
-            List<Widget> columns = [];
-            DateTime currentDay = _startDate;
-            
-            // Month labels
-            List<Widget> monthLabels = [];
-            int lastMonth = -1;
+        SizedBox(height: 12),
+        SizedBox(
+          height: 100,
+          child: heatmapAsync.when(
+            data: (data) {
+              final cells = <Widget>[];
+              for (var day = 1; day <= daysInMonth; day++) {
+                final totalMin = data.entries
+                    .where((e) =>
+                        e.key.year == _viewMonth.year &&
+                        e.key.month == _viewMonth.month &&
+                        e.key.day == day)
+                    .fold<int>(0, (prev, e) => prev + e.value);
+                final color = _colorForMinutes(totalMin);
+                final label = totalMin > 0
+                    ? '${(totalMin / 60).toStringAsFixed(1)}h — ${DateFormat('MMM d').format(DateTime(_viewMonth.year, _viewMonth.month, day))}'
+                    : DateFormat('MMM d — no activity').format(DateTime(_viewMonth.year, _viewMonth.month, day));
 
-            for (int w = 0; w <= widget.weeksToDisplay; w++) {
-              List<Widget> daysInWeek = [];
-              
-              if (currentDay.month != lastMonth && currentDay.day <= 14) {
-                monthLabels.add(Positioned(
-                  left: w * 16.0,
-                  child: Text(
-                    DateFormat('MMM').format(currentDay),
-                    style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.bold),
-                  ),
-                ));
-                lastMonth = currentDay.month;
-              }
-
-              for (int d = 0; d < 7; d++) {
-                if (currentDay.isAfter(_endDate)) {
-                  daysInWeek.add(const SizedBox(width: 14, height: 14));
-                } else {
-                  final duration = data.entries
-                      .where((e) =>
-                          e.key.year == currentDay.year &&
-                          e.key.month == currentDay.month &&
-                          e.key.day == currentDay.day)
-                      .fold<int>(0, (prev, e) => prev + e.value);
-
-                  final color = _getColorForDuration(duration);
-                  final label = duration > 0 ? '${duration}m on ${DateFormat('MMM d').format(currentDay)}' : 'No activity';
-
-                  daysInWeek.add(
-                    Tooltip(
-                      message: label,
-                      child: Container(
-                        width: 14,
-                        height: 14,
-                        margin: const EdgeInsets.only(bottom: 2),
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
+                cells.add(
+                  Tooltip(
+                    message: label,
+                    child: Container(
+                      width: 16, height: 16,
+                      margin: const EdgeInsets.only(right: 4, bottom: 4),
+                      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
                     ),
-                  );
-                }
-                currentDay = currentDay.add(const Duration(days: 1));
+                  ),
+                );
               }
 
-              columns.add(
-                Padding(
-                  padding: const EdgeInsets.only(right: 2),
-                  child: Column(
-                    children: daysInWeek,
-                  ),
-                ),
-              );
-            }
-
-            return SingleChildScrollView(
-              controller: _scrollController,
-              scrollDirection: Axis.horizontal,
-              child: Column(
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    height: 16,
-                    width: (widget.weeksToDisplay + 1) * 16.0,
-                    child: Stack(children: monthLabels),
+                  Wrap(runSpacing: 0, children: cells),
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text('Less', style: TextStyle(color: Colors.white38, fontSize: 9)),
+                      SizedBox(width: 4),
+                      ...[0, 0.5, 1, 2, 4, 8].map((h) => Container(
+                        width: 14, height: 14,
+                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                        decoration: BoxDecoration(color: _colorForMinutes((h * 60).round()), borderRadius: BorderRadius.circular(3)),
+                      )),
+                      SizedBox(width: 4),
+                      Text('More', style: TextStyle(color: Colors.white38, fontSize: 9)),
+                      SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/full-heatmap'),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.open_in_new_rounded, size: 11, color: Colors.white38),
+                            SizedBox(width: 3),
+                            Text('Full history', style: TextStyle(color: Colors.white38, fontSize: 9)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Row(children: columns),
                 ],
-              ),
-            );
-          },
-          loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
-          error: (e, _) => SizedBox(height: 120, child: Center(child: Text('Error: $e'))),
+              );
+            },
+            loading: () => Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('$e', style: TextStyle(color: Colors.white38, fontSize: 12))),
+          ),
         ),
       ],
     );

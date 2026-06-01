@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'calendar_screen.dart';
 import 'subject_list_screen.dart';
-import 'analytics_screen.dart';
+import 'revision_list_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/floating_bottom_nav.dart';
 import '../theme/app_background.dart';
@@ -21,7 +21,7 @@ class _AppShellState extends State<AppShell> {
   final _screens = const [
     CalendarScreen(),
     SubjectListScreen(),
-    AnalyticsScreen(),
+    RevisionListScreen(),
     ProfileScreen(),
   ];
 

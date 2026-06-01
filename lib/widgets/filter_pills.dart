@@ -27,7 +27,7 @@ class FilterPills extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Material(
-                color: selected ? AppColors.lavenderPurple : AppColors.cardWhite,
+                color: selected ? AppColors.lavenderPurple : Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(AppRadius.pill),

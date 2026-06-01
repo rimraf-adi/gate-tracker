@@ -4,13 +4,12 @@ import '../theme/app_theme.dart';
 import '../providers/providers.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/stats_ring.dart';
-import '../widgets/paper_chip.dart';
 import '../models/subject.dart';
 import '../models/paper.dart';
-import '../services/database_helper.dart';
-import '../services/syllabus_loader.dart';
 import '../models/topic.dart';
 import '../models/topic_progress.dart';
+import '../services/database_helper.dart';
+import '../services/syllabus_loader.dart';
 
 class SubjectListScreen extends ConsumerStatefulWidget {
   const SubjectListScreen({super.key});
@@ -22,26 +21,26 @@ class SubjectListScreen extends ConsumerStatefulWidget {
 class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
   bool _isEditing = false;
   Subject? _recentlyDeletedSubject;
-  List<Map<String, dynamic>>? _recentlyDeletedTopicsData; // To store topics under deleted subject
+  List<Map<String, dynamic>>? _recentlyDeletedTopicsData;
 
   String _emojiFor(String name) {
-    final nameLower = name.toLowerCase();
-    if (nameLower.contains('math')) return '📐';
-    if (nameLower.contains('digital')) return '💻';
-    if (nameLower.contains('computer org') || nameLower.contains('architecture') || nameLower.contains('coa')) return '🖥️';
-    if (nameLower.contains('program') || nameLower.contains('data structure') || nameLower.contains(' c ')) return '👨‍💻';
-    if (nameLower.contains('algo')) return '⚙️';
-    if (nameLower.contains('theory') || nameLower.contains('toc') || nameLower.contains('computation')) return '🔬';
-    if (nameLower.contains('compiler')) return '🔧';
-    if (nameLower.contains('operating') || nameLower.contains('os')) return '⚡';
-    if (nameLower.contains('database') || nameLower.contains('db') || nameLower.contains('sql')) return '🗄️';
-    if (nameLower.contains('network')) return '🌐';
-    if (nameLower.contains('signal') || nameLower.contains('system')) return '📡';
-    if (nameLower.contains('device') || nameLower.contains('electron') || nameLower.contains('semiconductor')) return '🔌';
-    if (nameLower.contains('analog') || nameLower.contains('circuit')) return '⚡';
-    if (nameLower.contains('control')) return '🎛️';
-    if (nameLower.contains('comm')) return '📶';
-    if (nameLower.contains('electromag')) return '🧲';
+    final n = name.toLowerCase();
+    if (n.contains('math')) return '📐';
+    if (n.contains('digital')) return '💻';
+    if (n.contains('computer org') || n.contains('architecture') || n.contains('coa')) return '🖥️';
+    if (n.contains('program') || n.contains('data structure') || n.contains(' c ')) return '👨‍💻';
+    if (n.contains('algo')) return '⚙️';
+    if (n.contains('theory') || n.contains('toc') || n.contains('computation')) return '🔬';
+    if (n.contains('compiler')) return '🔧';
+    if (n.contains('operating') || n.contains('os')) return '⚡';
+    if (n.contains('database') || n.contains('db') || n.contains('sql')) return '🗄️';
+    if (n.contains('network')) return '🌐';
+    if (n.contains('signal') || n.contains('system')) return '📡';
+    if (n.contains('device') || n.contains('electron') || n.contains('semiconductor')) return '🔌';
+    if (n.contains('analog') || n.contains('circuit')) return '⚡';
+    if (n.contains('control')) return '🎛️';
+    if (n.contains('comm')) return '📶';
+    if (n.contains('electromag')) return '🧲';
     return '📖';
   }
 
@@ -52,39 +51,24 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: const Text('Add Subject'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Subject Name (e.g. Linear Algebra)',
-          ),
-        ),
+        content: TextField(controller: controller, autofocus: true,
+          decoration: const InputDecoration(hintText: 'Subject Name (e.g. Linear Algebra)')),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.lavenderPurple,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-            ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill))),
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Save'),
-          ),
+            child: const Text('Save')),
         ],
       ),
     );
-
     if (name != null && name.isNotEmpty) {
       final db = DatabaseHelper.instance;
       final subjects = await db.getSubjectsByPaper(paperId);
-      final newSubject = Subject(
-        paperId: paperId,
-        name: name,
-        sortOrder: subjects.length,
-      );
-      await db.insertSubject(newSubject);
+      await db.insertSubject(Subject(paperId: paperId, name: name, sortOrder: subjects.length));
       ref.invalidate(subjectsByPaperProvider(paperId));
-      ref.invalidate(completedSubjectsCountProvider(paperId));
-      ref.invalidate(totalCompletedTopicsProvider(paperId));
       ref.invalidate(aggregateProgressProvider(paperId));
     }
   }
@@ -96,28 +80,21 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: const Text('Rename Subject'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Enter new subject name'),
-        ),
+        content: TextField(controller: controller, autofocus: true,
+          decoration: const InputDecoration(hintText: 'Enter new subject name')),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.lavenderPurple,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-            ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill))),
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Save'),
-          ),
+            child: const Text('Save')),
         ],
       ),
     );
-
     if (newName != null && newName.isNotEmpty && newName != subject.name) {
-      final db = DatabaseHelper.instance;
-      await db.updateSubject(subject.copyWith(name: newName));
+      await DatabaseHelper.instance.updateSubject(subject.copyWith(name: newName));
       ref.invalidate(subjectsByPaperProvider(subject.paperId));
     }
   }
@@ -131,36 +108,23 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
         content: Text('Are you sure you want to delete "${subject.name}"? This deletes all its topics and progress.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
+          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
         ],
       ),
     );
-
     if (confirmed == true) {
       final db = DatabaseHelper.instance;
-      
-      // Keep deleted data in memory for Undo action
       _recentlyDeletedSubject = subject;
       final topics = await db.getTopicsBySubject(subject.id!);
       _recentlyDeletedTopicsData = [];
       for (final t in topics) {
         final prog = await db.getProgress(t.id!);
-        _recentlyDeletedTopicsData!.add({
-          'topic': t,
-          'status': prog?.status,
-        });
+        _recentlyDeletedTopicsData!.add({'topic': t, 'status': prog?.status});
       }
-
       await db.deleteSubject(subject.id!);
       ref.invalidate(subjectsByPaperProvider(subject.paperId));
-      ref.invalidate(completedSubjectsCountProvider(subject.paperId));
-      ref.invalidate(totalCompletedTopicsProvider(subject.paperId));
       ref.invalidate(aggregateProgressProvider(subject.paperId));
-
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -168,8 +132,7 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
             content: Text('Deleted "${subject.name}"'),
             duration: const Duration(seconds: 4),
             action: SnackBarAction(
-              label: 'Undo',
-              textColor: AppColors.limeGreen,
+              label: 'Undo', textColor: AppColors.limeGreen,
               onPressed: () async {
                 if (_recentlyDeletedSubject != null) {
                   final newSubId = await db.insertSubject(_recentlyDeletedSubject!);
@@ -178,15 +141,10 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
                       final topic = (data['topic'] as Topic).copyWith(subjectId: newSubId);
                       final newTopicId = await db.insertTopic(topic);
                       final status = data['status'] as ProgressStatus?;
-                      if (status != null) {
-                        await db.setProgress(newTopicId, status);
-                      }
+                      if (status != null) await db.setProgress(newTopicId, status);
                     }
                   }
                   ref.invalidate(subjectsByPaperProvider(subject.paperId));
-                  ref.invalidate(completedSubjectsCountProvider(subject.paperId));
-                  ref.invalidate(totalCompletedTopicsProvider(subject.paperId));
-                  ref.invalidate(aggregateProgressProvider(subject.paperId));
                 }
               },
             ),
@@ -202,32 +160,24 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: const Text('Reset Syllabus?'),
-        content: Text('This will delete all custom edits, reorderings, and added subjects in ${paper.fullName} and reset to the original GATE syllabus. Continue?'),
+        content: Text('Reset ${paper.fullName} to the original GATE syllabus?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.lavenderPurple,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reset'),
-          ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill))),
+            onPressed: () => Navigator.pop(context, true), child: const Text('Reset')),
         ],
       ),
     );
-
     if (confirmed == true) {
-      setState(() {
-        _isEditing = false;
-      });
+      setState(() => _isEditing = false);
       await SyllabusLoader.instance.loadSingle(paper.code);
       ref.invalidate(allPapersProvider);
       ref.invalidate(subjectsByPaperProvider(paper.id!));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reset ${paper.code} syllabus to default!')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Reset ${paper.code} syllabus!', style: TextStyle(color: AppColors.limeGreen))));
       }
     }
   }
@@ -246,59 +196,33 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Subjects',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
-        ),
+        backgroundColor: Colors.transparent, elevation: 0,
+        title: Text('Subjects', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
         actions: [
+          IconButton(
+            icon: Icon(_isEditing ? Icons.check_circle_rounded : Icons.edit_rounded),
+            color: _isEditing ? AppColors.lavenderPurple : Theme.of(context).colorScheme.onSurface,
+            iconSize: 26, onPressed: () => setState(() => _isEditing = !_isEditing)),
+          if (currentPaper != null && !currentPaper!.isCustom)
             IconButton(
-                icon: Icon(_isEditing ? Icons.check_circle_rounded : Icons.edit_rounded),
-                color: _isEditing ? AppColors.lavenderPurple : AppColors.textWhite,
-                iconSize: 26,
-                onPressed: () {
-                  setState(() {
-                    _isEditing = !_isEditing;
-                  });
-                },
-              ),
-              if (currentPaper != null && !currentPaper!.isCustom)
-                IconButton(
-                  icon: const Icon(Icons.restore_rounded),
-                  color: AppColors.textWhite,
-                  iconSize: 26,
-                  onPressed: () => _resetToDefault(currentPaper!),
-                ),
-          const SizedBox(width: 8),
+              icon: Icon(Icons.restore_rounded),
+              color: Theme.of(context).colorScheme.onSurface,
+              iconSize: 26, onPressed: () => _resetToDefault(currentPaper!)),
+          SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
-            // Paper switcher chip
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: [
-                  const PaperChip(),
-                  if (_isEditing) ...[
-                    const SizedBox(width: 12),
-                    Text(
-                      'Editing Mode',
-                      style: TextStyle(
-                        color: AppColors.lavenderPurple.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ],
+            SizedBox(height: 8),
+            if (_isEditing)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Text('Editing Mode',
+                  style: TextStyle(color: AppColors.lavenderPurple.withValues(alpha: 0.9), fontWeight: FontWeight.bold, fontSize: 12)),
               ),
-            ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Expanded(
               child: subjectsAsync.when(
                 data: (subjects) {
@@ -307,48 +231,31 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            'No subjects found.',
-                            style: TextStyle(fontSize: 16, color: AppColors.textGray),
-                          ),
-                          const SizedBox(height: 8),
-                          if (_isEditing)
-                            ElevatedButton(
-                              onPressed: () => _showAddSubjectDialog(paperId),
-                              child: const Text('Add First Subject'),
-                            ),
+                          Text('No subjects found.',
+                            style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
+                          if (_isEditing) ...[SizedBox(height: 8),
+                            ElevatedButton(onPressed: () => _showAddSubjectDialog(paperId), child: const Text('Add First Subject'))],
                         ],
                       ),
                     );
                   }
-
                   if (_isEditing) {
                     return ReorderableListView.builder(
-                      padding: const EdgeInsets.only(bottom: 100),
+                      padding: EdgeInsets.only(bottom: 100),
                       itemCount: subjects.length,
                       onReorderItem: (oldIndex, newIndex) async {
-                        final updatedList = List<Subject>.from(subjects);
-                        final item = updatedList.removeAt(oldIndex);
-                        updatedList.insert(newIndex, item);
-
-                        final ids = updatedList.map((s) => s.id!).toList();
-                        await DatabaseHelper.instance.reorderSubjects(ids);
+                        final list = List<Subject>.from(subjects);
+                        list.insert(newIndex, list.removeAt(oldIndex));
+                        await DatabaseHelper.instance.reorderSubjects(list.map((s) => s.id!).toList());
                         ref.invalidate(subjectsByPaperProvider(paperId));
                       },
-                      itemBuilder: (context, i) {
-                        final subject = subjects[i];
-                        return _buildEditableSubjectCard(subject);
-                      },
+                      itemBuilder: (_, i) => _buildEditableSubjectCard(subjects[i]),
                     );
                   }
-
                   return ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 100),
+                    padding: EdgeInsets.only(bottom: 100),
                     itemCount: subjects.length,
-                    itemBuilder: (context, i) {
-                      final subject = subjects[i];
-                      return _buildSubjectCard(subject);
-                    },
+                    itemBuilder: (_, i) => _buildSubjectCard(subjects[i]),
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -363,8 +270,7 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
               backgroundColor: AppColors.lavenderPurple,
               mini: true,
               onPressed: () => _showAddSubjectDialog(paperId),
-              child: const Icon(Icons.add, color: Colors.white),
-            )
+              child: const Icon(Icons.add, color: Colors.white))
           : null,
     );
   }
@@ -372,53 +278,36 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
   Widget _buildSubjectCard(Subject subject) {
     final progressAsync = ref.watch(subjectProgressProvider(subject.id!));
     final strengthAsync = ref.watch(topicStrengthProvider(subject.id!));
-
     return progressAsync.when(
       data: (progress) {
         final completed = progress['completed'] ?? 0;
         final total = progress['total'] ?? 0;
         final ratio = total > 0 ? completed / total : 0.0;
-
-        final strength = strengthAsync.asData?.value ?? {'strong': 0, 'mid': 0, 'weak': 0};
-        final strong = strength['strong'] ?? 0;
-        final mid = strength['mid'] ?? 0;
-        final weak = strength['weak'] ?? 0;
-
+        final st = strengthAsync.asData?.value ?? {'strong': 0, 'mid': 0, 'weak': 0};
         return GlassCard(
-          onTap: subject.id != null
-              ? () {
-                  Navigator.pushNamed(context, '/topics', arguments: subject.id);
-                }
-              : null,
+          onTap: subject.id != null ? () => Navigator.pushNamed(context, '/topics', arguments: subject.id) : null,
           child: Row(
             children: [
               Text(_emojiFor(subject.name), style: const TextStyle(fontSize: 32)),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      subject.name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
-                          ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        _StrengthChip(label: '$strong strong', color: const Color(0xFF4CAF50)),
-                        const SizedBox(width: 6),
-                        _StrengthChip(label: '$mid mid', color: Colors.orange),
-                        const SizedBox(width: 6),
-                        _StrengthChip(label: '$weak weak', color: const Color(0xFFE57373)),
-                      ],
-                    ),
+                    Text(subject.name,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3)),
+                    SizedBox(height: 6),
+                    Row(children: [
+                      _StrengthChip(label: '${st['strong']} strong', color: const Color(0xFF4CAF50)),
+                      SizedBox(width: 6),
+                      _StrengthChip(label: '${st['mid']} mid', color: Colors.orange),
+                      SizedBox(width: 6),
+                      _StrengthChip(label: '${st['weak']} weak', color: const Color(0xFFE57373)),
+                    ]),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               StatsRing(progress: ratio),
             ],
           ),
@@ -429,54 +318,32 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
     );
   }
 
-  Widget _StrengthChip({required String label, required Color color}) {
+  Widget _buildEditableSubjectCard(Subject subject) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
+      key: ValueKey(subject.id),
+      child: GlassCard(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.drag_indicator_rounded, color: Colors.white38),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(subject.name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            ),
+            IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.white54), onPressed: () => _showRenameDialog(subject)),
+            IconButton(icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent), onPressed: () => _deleteSubject(subject)),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildEditableSubjectCard(Subject subject) {
+  Widget _StrengthChip({required String label, required Color color}) {
     return Container(
-      key: ValueKey(subject.id),
-      child: GlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            const Icon(Icons.drag_indicator_rounded, color: Colors.white38),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                subject.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined, color: Colors.white54),
-              onPressed: () => _showRenameDialog(subject),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-              onPressed: () => _deleteSubject(subject),
-            ),
-          ],
-        ),
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(AppRadius.pill)),
+      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
     );
   }
 }

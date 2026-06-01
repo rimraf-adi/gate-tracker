@@ -4,6 +4,7 @@ class TopicRevision {
   final DateTime scheduledDate;
   final DateTime? completedDate;
   final int intervalDays;
+  final int attempts;
 
   TopicRevision({
     this.id,
@@ -11,6 +12,7 @@ class TopicRevision {
     required this.scheduledDate,
     this.completedDate,
     required this.intervalDays,
+    this.attempts = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class TopicRevision {
       'scheduled_date': scheduledDate.toIso8601String(),
       'completed_date': completedDate?.toIso8601String(),
       'interval_days': intervalDays,
+      'attempts': attempts,
     };
   }
 
@@ -32,6 +35,7 @@ class TopicRevision {
           ? DateTime.parse(map['completed_date'] as String)
           : null,
       intervalDays: map['interval_days'] as int,
+      attempts: map['attempts'] as int? ?? 0,
     );
   }
 
@@ -41,6 +45,7 @@ class TopicRevision {
     DateTime? scheduledDate,
     DateTime? completedDate,
     int? intervalDays,
+    int? attempts,
   }) {
     return TopicRevision(
       id: id ?? this.id,
@@ -48,6 +53,7 @@ class TopicRevision {
       scheduledDate: scheduledDate ?? this.scheduledDate,
       completedDate: completedDate ?? this.completedDate,
       intervalDays: intervalDays ?? this.intervalDays,
+      attempts: attempts ?? this.attempts,
     );
   }
 }

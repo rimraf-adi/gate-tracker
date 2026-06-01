@@ -26,14 +26,14 @@ class MockTestScreen extends ConsumerWidget {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
-        title: const Text('Delete Mock Test?'),
+        title: Text('Delete Mock Test?'),
         content: Text('Are you sure you want to delete the records for "$testName"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -46,12 +46,12 @@ class MockTestScreen extends ConsumerWidget {
     final testsAsync = ref.watch(mockTestsByPaperProvider(paperId));
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textWhite),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -60,24 +60,24 @@ class MockTestScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_rounded),
+            icon: Icon(Icons.add_circle_rounded),
             color: AppColors.lavenderPurple,
             iconSize: 32,
             onPressed: () => _showAddTestSheet(context, paperId),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Expanded(
               child: testsAsync.when(
                 data: (tests) {
                   if (tests.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -110,7 +110,7 @@ class MockTestScreen extends ConsumerWidget {
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           color: Colors.redAccent.withValues(alpha: 0.9),
-                          child: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 28),
+                          child: Icon(Icons.delete_forever_rounded, color: Colors.white, size: 28),
                         ),
                         onDismissed: (direction) async {
                           final db = DatabaseHelper.instance;
@@ -143,7 +143,7 @@ class MockTestScreen extends ConsumerWidget {
                     },
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Error: $e')),
               ),
             ),
@@ -179,7 +179,7 @@ class MockTestScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -187,7 +187,7 @@ class MockTestScreen extends ConsumerWidget {
                 '${test.marksObtained}',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                       fontSize: 36,
-                      color: AppColors.darkSurface,
+                      color: Theme.of(context).colorScheme.surface,
                     ),
               ),
               Text(
@@ -200,7 +200,7 @@ class MockTestScreen extends ConsumerWidget {
               const Spacer(),
               Text(
                 '${(percentage * 100).toStringAsFixed(1)}%',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.lavenderPurple,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -208,35 +208,35 @@ class MockTestScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
               value: percentage,
               minHeight: 6,
-              backgroundColor: AppColors.lightGray,
+              backgroundColor: Theme.of(context).dividerColor,
               valueColor: const AlwaysStoppedAnimation(AppColors.lavenderPurple),
             ),
           ),
           if (test.percentile != null || test.rank != null) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 if (test.percentile != null) ...[
-                  const Icon(Icons.percent_rounded, size: 16, color: Colors.white70),
-                  const SizedBox(width: 4),
+                  Icon(Icons.percent_rounded, size: 16, color: Colors.white70),
+                  SizedBox(width: 4),
                   Text(
                     'Percentile: ${test.percentile!.toStringAsFixed(1)}',
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
                   ),
-                  const SizedBox(width: 20),
+                  SizedBox(width: 20),
                 ],
                 if (test.rank != null) ...[
-                  const Icon(Icons.emoji_events_rounded, size: 16, color: Colors.orangeAccent),
-                  const SizedBox(width: 4),
+                  Icon(Icons.emoji_events_rounded, size: 16, color: Colors.orangeAccent),
+                  SizedBox(width: 4),
                   Text(
                     'Rank: #${test.rank}',
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
                   ),
                 ],
               ],
@@ -300,18 +300,18 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
                 'Record Mock Test',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Test Name (e.g. GATE 2025 CSE)',
                   filled: true,
-                  fillColor: AppColors.cardWhite,
+                  fillColor: Theme.of(context).cardColor,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.small)),
                 ),
                 validator: (val) => val == null || val.isEmpty ? 'Please enter test name' : null,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -321,7 +321,7 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
                       decoration: InputDecoration(
                         labelText: 'Marks Obtained',
                         filled: true,
-                        fillColor: AppColors.cardWhite,
+                        fillColor: Theme.of(context).cardColor,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.small)),
                       ),
                       validator: (val) {
@@ -332,7 +332,7 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: TextFormField(
                       controller: _totalController,
@@ -340,7 +340,7 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
                       decoration: InputDecoration(
                         labelText: 'Total Marks',
                         filled: true,
-                        fillColor: AppColors.cardWhite,
+                        fillColor: Theme.of(context).cardColor,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.small)),
                       ),
                       validator: (val) {
@@ -357,7 +357,7 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -367,12 +367,12 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
                       decoration: InputDecoration(
                         labelText: 'Percentile (Optional)',
                         filled: true,
-                        fillColor: AppColors.cardWhite,
+                        fillColor: Theme.of(context).cardColor,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.small)),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: TextFormField(
                       controller: _rankController,
@@ -380,38 +380,38 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
                       decoration: InputDecoration(
                         labelText: 'Rank (Optional)',
                         filled: true,
-                        fillColor: AppColors.cardWhite,
+                        fillColor: Theme.of(context).cardColor,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.small)),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Test Date: ${DateFormat('MMMM dd, yyyy').format(_selectedDate)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   TextButton.icon(
                     onPressed: _selectDate,
-                    icon: const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.lavenderPurple),
-                    label: const Text('Change', style: TextStyle(color: AppColors.lavenderPurple, fontWeight: FontWeight.bold)),
+                    icon: Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.lavenderPurple),
+                    label: Text('Change', style: TextStyle(color: AppColors.lavenderPurple, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                      child: Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -449,12 +449,12 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
                           }
                         }
                       },
-                      child: const Text('Save Test', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text('Save Test', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
             ],
           ),
         ),

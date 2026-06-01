@@ -43,17 +43,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Edit Name', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: _nameController,
                 autofocus: true,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.darkSurface,
+                  fillColor: Theme.of(context).colorScheme.surface,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.small)),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -66,7 +66,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ref.read(userNameProvider.notifier).updateName(_nameController.text.trim());
                     Navigator.pop(ctx);
                   },
-                  child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -88,12 +88,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text('Profile', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               // Name card
               Padding(
@@ -101,7 +101,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.darkSurface,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
                   child: Row(
@@ -117,12 +117,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           return Center(
                             child: Text(
                               name.isNotEmpty ? name[0].toUpperCase() : '?',
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           );
                         }),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16),
                       Expanded(
                         child: Consumer(builder: (context, ref, _) {
                           final name = ref.watch(userNameProvider);
@@ -130,37 +130,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(name, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text('GATE Aspirant', style: Theme.of(context).textTheme.bodySmall),
                             ],
                           );
                         }),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.edit_rounded, color: AppColors.lavenderPurple),
+                        icon: Icon(Icons.edit_rounded, color: AppColors.lavenderPurple),
                         onPressed: _showEditNameSheet,
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
-              // Global Stats
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text('Global Stats', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 12),
+              // Quick actions
+              SizedBox(height: 12),
               _GlobalStatsGrid(),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               // Per-paper stats
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text('Paper Progress', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               papersAsync.when(
                 data: (papers) => Column(
                   children: papers.map((p) => _PaperStatCard(paper: p)).toList(),
@@ -169,30 +165,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 error: (_, __) => const SizedBox.shrink(),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
+
+
 
               // Quick actions
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text('Quick Actions', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
                     _ActionRow(
+                      icon: Icons.replay_rounded,
+                      label: 'View Revision History',
+                      onTap: () => Navigator.pushNamed(context, '/revision-history'),
+                    ),
+                    SizedBox(height: 8),
+                    _ActionRow(
                       icon: Icons.history_rounded,
                       label: 'View Study History',
                       onTap: () => Navigator.pushNamed(context, '/session-history'),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     _ActionRow(
                       icon: Icons.add_circle_outline_rounded,
                       label: 'Create Custom Exam',
                       onTap: () => Navigator.pushNamed(context, '/add-custom-exam'),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     _ActionRow(
                       icon: Icons.restart_alt_rounded,
                       label: 'Reset All Progress',
@@ -201,14 +205,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           context: context,
                           builder: (_) => AlertDialog(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
-                            title: const Text('Reset All Progress?'),
-                            content: const Text('This will clear all topic progress and study sessions. This cannot be undone.'),
+                            title: Text('Reset All Progress?'),
+                            content: Text('This will clear all topic progress and study sessions. This cannot be undone.'),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Reset'),
+                                child: Text('Reset'),
                               ),
                             ],
                           ),
@@ -222,7 +226,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ref.invalidate(totalNotesCountProvider);
                           ref.invalidate(studySessionHistoryProvider);
                           ref.invalidate(studyHoursPerDayProvider(7));
-                          ref.invalidate(activityHeatmapProvider(DateTime.now().subtract(const Duration(days: 365))));
+                          ref.invalidate(activityHeatmapProvider);
+                          ref.invalidate(allPapersCompletedTopicsProvider);
+                          ref.invalidate(allPapersMockCountProvider);
+                          ref.invalidate(allPapersMockAvgProvider);
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('All progress has been reset.')),
@@ -249,22 +256,54 @@ class _GlobalStatsGrid extends ConsumerWidget {
     final streakAsync = ref.watch(currentStreakProvider);
     final notesAsync = ref.watch(totalNotesCountProvider);
     final sessionsAsync = ref.watch(totalStudySessionsCountProvider);
+    final topicsAsync = ref.watch(allPapersCompletedTopicsProvider);
+    final mocksCountAsync = ref.watch(allPapersMockCountProvider);
+    final mocksAvgAsync = ref.watch(allPapersMockAvgProvider);
 
     final totalHours = hoursAsync.valueOrNull != null ? (hoursAsync.valueOrNull! / 60).round() : 0;
     final streak = streakAsync.valueOrNull ?? 0;
     final notes = notesAsync.valueOrNull ?? 0;
     final sessions = sessionsAsync.valueOrNull ?? 0;
+    final topics = topicsAsync.valueOrNull ?? 0;
+    final mocks = mocksCountAsync.valueOrNull ?? 0;
+    final mockAvg = mocksAvgAsync.valueOrNull ?? 0.0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
+      child: Column(
         children: [
-          _MiniStatCard(icon: Icons.timer_rounded, value: '$totalHours', label: 'Total Hours', color: AppColors.lavenderPurple),
-          _MiniStatCard(icon: Icons.local_fire_department_rounded, value: '$streak', label: 'Day Streak', color: Colors.orange),
-          _MiniStatCard(icon: Icons.notes_rounded, value: '$notes', label: 'Notes', color: const Color(0xFF4CAF50)),
-          _MiniStatCard(icon: Icons.menu_book_rounded, value: '$sessions', label: 'Sessions', color: const Color(0xFF42A5F5)),
+          Row(
+            children: [
+              Expanded(child: _MiniStatCard(icon: Icons.timer_rounded, value: '${totalHours}h', label: 'Study Hours', color: AppColors.lavenderPurple)),
+              SizedBox(width: 10),
+              Expanded(child: _MiniStatCard(icon: Icons.local_fire_department_rounded, value: '$streak', label: 'Day Streak', color: Colors.orange)),
+            ],
+          ),
+          SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _MiniStatCard(icon: Icons.check_circle_rounded, value: '$topics', label: 'Topics Done', color: const Color(0xFF4CAF50))),
+              SizedBox(width: 10),
+              Expanded(child: _MiniStatCard(icon: Icons.notes_rounded, value: '$notes', label: 'Notes', color: const Color(0xFF42A5F5))),
+            ],
+          ),
+          SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _MiniStatCard(icon: Icons.menu_book_rounded, value: '$sessions', label: 'Sessions', color: AppColors.lavenderPurple)),
+              SizedBox(width: 10),
+              Expanded(child: _MiniStatCard(icon: Icons.quiz_rounded, value: mocks > 0 ? '$mocks' : '0', label: 'Mock Tests', color: Colors.orange)),
+            ],
+          ),
+          SizedBox(height: 10),
+          if (mocks > 0)
+            Row(
+              children: [
+                Expanded(child: _MiniStatCard(icon: Icons.analytics_rounded, value: '${mockAvg.toStringAsFixed(0)}%', label: 'Mock Average', color: const Color(0xFF42A5F5))),
+                SizedBox(width: 10),
+                Expanded(child: _MiniStatCard(icon: Icons.assignment_turned_in_rounded, value: '—', label: 'Subjects', color: AppColors.lavenderPurple)),
+              ],
+            ),
         ],
       ),
     );
@@ -281,20 +320,36 @@ class _MiniStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.surface;
     return Container(
       width: (MediaQuery.of(context).size.width - 60) / 2,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(AppRadius.card),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            surface,
+            surface.withValues(alpha: 0.85),
+          ],
+          stops: const [0.0, 1.0],
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          SizedBox(height: 12),
           Text(value, style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
@@ -335,7 +390,7 @@ class _PaperStatCard extends ConsumerWidget {
                         children: [
                           Text(paper.code, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                           if (paper.isCustom)
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                           if (paper.isCustom)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -343,31 +398,31 @@ class _PaperStatCard extends ConsumerWidget {
                                 color: AppColors.lavenderPurple.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(AppRadius.pill),
                               ),
-                              child: const Text('CUSTOM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.lavenderPurple)),
+                              child: Text('CUSTOM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.lavenderPurple)),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(paper.fullName, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Row(
                         children: [
                           _metricChip('$subjectsDone subjects done'),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           _metricChip('$mockCount tests'),
                         ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 progressAsync.when(
                   data: (p) => StatsRing(progress: p, size: 48),
-                  loading: () => const SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 3)),
-                  error: (_, __) => const SizedBox(width: 48, height: 48),
+                  loading: () => SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 3)),
+                  error: (_, __) => SizedBox(width: 48, height: 48),
                 ),
                 if (mockCount > 0) ...[
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text('${avgScore.toStringAsFixed(0)}%', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: AppColors.lavenderPurple)),
                 ],
               ],
@@ -385,7 +440,7 @@ class _PaperStatCard extends ConsumerWidget {
         color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 11, color: Colors.white70)),
+      child: Text(text, style: TextStyle(fontSize: 11, color: Colors.white70)),
     );
   }
 }
@@ -400,7 +455,7 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.darkSurface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.small),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.small),
@@ -410,9 +465,9 @@ class _ActionRow extends StatelessWidget {
           child: Row(
             children: [
               Icon(icon, color: AppColors.lavenderPurple, size: 22),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(child: Text(label, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500))),
-              const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+              Icon(Icons.chevron_right_rounded, color: Colors.white38),
             ],
           ),
         ),
@@ -420,3 +475,5 @@ class _ActionRow extends StatelessWidget {
     );
   }
 }
+
+

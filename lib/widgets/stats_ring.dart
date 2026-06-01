@@ -28,7 +28,7 @@ class StatsRing extends StatelessWidget {
           CircularProgressIndicator(
             value: displayProgress,
             strokeWidth: size * 0.08,
-            backgroundColor: AppColors.lightGray,
+            backgroundColor: Theme.of(context).dividerColor,
             valueColor: AlwaysStoppedAnimation(color),
           ),
           Text(

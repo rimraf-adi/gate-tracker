@@ -22,9 +22,9 @@ class PaperChip extends ConsumerWidget {
 
         return Container(
           decoration: BoxDecoration(
-            color: AppColors.cardWhite,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(color: AppColors.lightGray),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: PopupMenuButton<int>(
             shape: RoundedRectangleBorder(
@@ -47,19 +47,19 @@ class PaperChip extends ConsumerWidget {
                           Icon(
                             p.isCustom ? Icons.edit_note_rounded : Icons.assignment_outlined,
                             size: 20,
-                            color: AppColors.textGray,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
-                          const SizedBox(width: 8),
-                          Text(p.fullName, style: const TextStyle(color: AppColors.textWhite)),
+                          SizedBox(width: 8),
+                          Text(p.fullName, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                           if (p.isCustom) ...[
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: AppColors.lavenderPurple.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(AppRadius.small),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'CUSTOM',
                                 style: TextStyle(
                                   fontSize: 10,
@@ -101,20 +101,20 @@ class PaperChip extends ConsumerWidget {
                     size: 18,
                     color: AppColors.lavenderPurple,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     selectedPaper.fullName,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textWhite),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
                   ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppColors.textGray),
+                  SizedBox(width: 4),
+                  Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                 ],
               ),
             ),
           ),
         );
       },
-      loading: () => const SizedBox(
+      loading: () => SizedBox(
         height: 38,
         width: 100,
         child: Center(

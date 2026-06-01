@@ -47,7 +47,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
           builder: (context, setState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
-              title: const Text('Add Topic'),
+              title: Text('Add Topic'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -61,9 +61,9 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                         hintText: 'e.g. Asymptotic Notation',
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text('Chapter', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 16),
+                    Text('Chapter', style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
                     if (!isNewChapter) ...[
                       DropdownButtonFormField<String>(
                         initialValue: selectedChapter,
@@ -82,7 +82,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                             isNewChapter = true;
                           });
                         },
-                        child: const Text('+ Create New Chapter'),
+                        child: Text('+ Create New Chapter'),
                       ),
                     ] else ...[
                       TextField(
@@ -98,14 +98,14 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                             isNewChapter = false;
                           });
                         },
-                        child: const Text('Use Existing Chapter'),
+                        child: Text('Use Existing Chapter'),
                       ),
                     ],
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.lavenderPurple,
@@ -118,7 +118,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                       Navigator.pop(context, {'name': name, 'chapter': chapter});
                     }
                   },
-                  child: const Text('Save'),
+                  child: Text('Save'),
                 ),
               ],
             );
@@ -170,7 +170,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
           builder: (context, setState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
-              title: const Text('Edit Topic'),
+              title: Text('Edit Topic'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -180,9 +180,9 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                       controller: nameController,
                       decoration: const InputDecoration(labelText: 'Topic Name'),
                     ),
-                    const SizedBox(height: 16),
-                    const Text('Chapter', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 16),
+                    Text('Chapter', style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
                     if (!isNewChapter) ...[
                       DropdownButtonFormField<String>(
                         initialValue: selectedChapter,
@@ -201,7 +201,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                             isNewChapter = true;
                           });
                         },
-                        child: const Text('+ Create New Chapter'),
+                        child: Text('+ Create New Chapter'),
                       ),
                     ] else ...[
                       TextField(
@@ -216,14 +216,14 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                             isNewChapter = false;
                           });
                         },
-                        child: const Text('Use Existing Chapter'),
+                        child: Text('Use Existing Chapter'),
                       ),
                     ],
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.lavenderPurple,
@@ -236,7 +236,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                       Navigator.pop(context, {'name': name, 'chapter': chapter});
                     }
                   },
-                  child: const Text('Save'),
+                  child: Text('Save'),
                 ),
               ],
             );
@@ -260,14 +260,14 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
-        title: const Text('Delete Topic?'),
+        title: Text('Delete Topic?'),
         content: Text('Are you sure you want to delete "${topic.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -322,6 +322,53 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
     }
   }
 
+  Future<int?> _showDurationDialog(BuildContext context) async {
+    int selected = 30;
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+          title: Text('Mark as Completed', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('How long did you study this topic?',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
+              SizedBox(height: 16),
+              Wrap(spacing: 8, children: [15, 30, 45, 60, 90, 120].map((d) {
+                final sel = selected == d;
+                return ChoiceChip(
+                  label: Text(d >= 60 ? '${d ~/ 60}h ${d % 60}m' : '${d}m'),
+                  selected: sel,
+                  selectedColor: Theme.of(context).colorScheme.primary,
+                  labelStyle: TextStyle(
+                    color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  onSelected: (_) => setState(() => selected = d),
+                );
+              }).toList()),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: Colors.white54))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+              ),
+              onPressed: () => Navigator.pop(ctx, selected),
+              child: Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+    return result;
+  }
+
   void _showLogStudySheet(List<Topic> topics) {
     if (topics.isEmpty) return;
 
@@ -344,7 +391,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
     final paperId = ref.watch(selectedPaperIdProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -364,7 +411,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                   });
                 },
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
             ],
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 48, bottom: 16),
@@ -374,7 +421,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                   final subjectName = snapshot.data?.name ?? 'Loading...';
                   return Text(
                     subjectName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
@@ -403,15 +450,15 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                                   color: Colors.white12,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.assignment_turned_in_rounded, color: Colors.white),
+                                child: Icon(Icons.assignment_turned_in_rounded, color: Colors.white),
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     '$completed / $total topics',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
                                       fontSize: 20,
@@ -419,7 +466,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                                   ),
                                   Text(
                                     '${(ratio * 100).toStringAsFixed(0)}% Completed',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Colors.white70,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
@@ -442,9 +489,9 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
             child: Transform.translate(
               offset: const Offset(0, -24),
               child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.darkBackground,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(32),
                     topRight: Radius.circular(32),
                   ),
@@ -454,7 +501,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // Action buttons (Log Study button)
               if (!_isEditing)
@@ -471,18 +518,18 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                   ),
                 ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // Topics List
               topicsAsync.when(
                 data: (topics) {
                   if (topics.isEmpty) {
-                    return const Padding(
+                    return Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
                       child: Center(
                         child: Text(
                           'No topics in this subject.',
-                          style: TextStyle(fontSize: 16, color: AppColors.textGray),
+                          style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                         ),
                       ),
                     );
@@ -512,7 +559,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: AppColors.darkSurface,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(AppRadius.card),
                         ),
                         padding: const EdgeInsets.all(16),
@@ -521,10 +568,10 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                           children: [
                             Text(chapterName,
                               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold, color: AppColors.textWhite,
+                                fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             if (_isEditing)
                               ...chapterTopics.map((topic) {
                                 final String? strength = strengthMap[topic.id];
@@ -533,18 +580,18 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                                   padding: const EdgeInsets.symmetric(vertical: 4),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.drag_indicator_rounded, color: Colors.white54, size: 20),
-                                      const SizedBox(width: 8),
+                                      Icon(Icons.drag_indicator_rounded, color: Colors.white54, size: 20),
+                                      SizedBox(width: 8),
                                       Expanded(
                                         child: Text(topic.name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
                                       ),
                                       _StrengthBadge(strength, topicId: topic.id!, subjectId: widget.subjectId),
                                       IconButton(
-                                        icon: const Icon(Icons.edit_outlined, color: Colors.white70, size: 20),
+                                        icon: Icon(Icons.edit_outlined, color: Colors.white70, size: 20),
                                         onPressed: () => _showRenameDialog(topic),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                                        icon: Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
                                         onPressed: () => _deleteTopic(topic),
                                       ),
                                     ],
@@ -563,9 +610,19 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                                   status: progressState,
                                   strength: strength,
                                   noteCount: noteCount,
-                                  onTap: () {
-                                    ref.read(topicProgressProvider(topic.id!).notifier)
-                                        .toggle(subjectId: widget.subjectId, paperId: paperId);
+                                  onTap: () async {
+                                    final topicId = topic.id!;
+                                    final progress = ref.read(topicProgressProvider(topicId));
+                                    if (progress == ProgressStatus.pending) {
+                                      final dur = await _showDurationDialog(context);
+                                      if (dur != null && context.mounted) {
+                                        ref.read(topicProgressProvider(topicId).notifier)
+                                            .toggle(subjectId: widget.subjectId, paperId: paperId, durationMinutes: dur);
+                                      }
+                                    } else {
+                                      ref.read(topicProgressProvider(topicId).notifier)
+                                          .toggle(subjectId: widget.subjectId, paperId: paperId);
+                                    }
                                   },
                                   onNoteTap: () {
                                     Navigator.pushNamed(
@@ -589,7 +646,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                     }).toList(),
                   );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error: $e')),
         ),
             ],
@@ -604,7 +661,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
               backgroundColor: AppColors.neonLime,
               mini: true,
               onPressed: _showAddTopicDialog,
-              child: const Icon(Icons.add, color: AppColors.darkBackground),
+              child: Icon(Icons.add, color: Theme.of(context).scaffoldBackgroundColor),
             )
           : null,
     );
@@ -703,19 +760,19 @@ class _LogStudyFormState extends ConsumerState<_LogStudyForm> {
                   letterSpacing: -0.5,
                 ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Text(
             'Select Topic',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           DropdownButtonFormField<int>(
             decoration: InputDecoration(
               filled: true,
-              fillColor: AppColors.cardWhite,
+              fillColor: Theme.of(context).cardColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.small),
-                borderSide: const BorderSide(color: AppColors.lightGray),
+                borderSide: BorderSide(color: Theme.of(context).dividerColor),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
@@ -737,12 +794,12 @@ class _LogStudyFormState extends ConsumerState<_LogStudyForm> {
               }
             },
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Text(
             'Study Duration',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -753,7 +810,7 @@ class _LogStudyFormState extends ConsumerState<_LogStudyForm> {
                 label: Text(label),
                 selected: isSelected,
                 selectedColor: AppColors.lavenderPurple,
-                backgroundColor: AppColors.cardWhite,
+                backgroundColor: Theme.of(context).cardColor,
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.white : Colors.white,
                   fontWeight: FontWeight.bold,
@@ -767,16 +824,16 @@ class _LogStudyFormState extends ConsumerState<_LogStudyForm> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Row(
             children: [
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                  child: Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -792,12 +849,17 @@ class _LogStudyFormState extends ConsumerState<_LogStudyForm> {
                     );
                     await DatabaseHelper.instance.addSession(session);
                     ref.invalidate(studyHoursPerDayProvider(7));
-                    ref.invalidate(activityHeatmapProvider(DateTime.now().subtract(const Duration(days: 365))));
+                    ref.invalidate(activityHeatmapProvider);
                     ref.invalidate(weakTopicsProvider(ref.read(selectedPaperIdProvider)));
                     ref.invalidate(totalStudyHoursProvider);
                     ref.invalidate(totalStudySessionsCountProvider);
                     ref.invalidate(currentStreakProvider);
                     ref.invalidate(studySessionHistoryProvider);
+                    ref.invalidate(allPapersCompletedTopicsProvider);
+                    ref.invalidate(allPapersMockCountProvider);
+                    ref.invalidate(allPapersMockAvgProvider);
+                    ref.invalidate(completedTopicsTodayProvider);
+                    ref.invalidate(revisionHistoryProvider(ref.read(selectedPaperIdProvider)));
 
                     if (context.mounted) {
                       Navigator.pop(context);
@@ -806,12 +868,12 @@ class _LogStudyFormState extends ConsumerState<_LogStudyForm> {
                       );
                     }
                   },
-                  child: const Text('Confirm', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('Confirm', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
         ],
       ),
     );

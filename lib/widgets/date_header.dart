@@ -16,7 +16,7 @@ class DateHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(_day, style: Theme.of(context).textTheme.displayLarge),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Column(

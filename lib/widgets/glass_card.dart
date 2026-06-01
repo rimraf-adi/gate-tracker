@@ -17,22 +17,32 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = Theme.of(context).cardColor;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Container(
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius ?? AppRadius.card),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              cardColor,
+              cardColor.withValues(alpha: 0.85),
+            ],
+            stops: const [0.0, 1.0],
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Material(
-          color: AppColors.cardWhite,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(borderRadius ?? AppRadius.card),
-          elevation: 0,
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(borderRadius ?? AppRadius.card),

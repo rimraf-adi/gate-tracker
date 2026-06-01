@@ -47,16 +47,16 @@ class ProgressGridItem extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: completed
                         ? AppColors.lavenderPurple
-                        : AppColors.lightGray,
+                        : Theme.of(context).dividerColor,
                     border: completed
                         ? null
                         : Border.all(color: Colors.white38, width: 1.5),
                   ),
                   child: completed
-                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                      ? Icon(Icons.check, size: 16, color: Colors.white)
                       : null,
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     label,
@@ -69,7 +69,7 @@ class ProgressGridItem extends StatelessWidget {
                   ),
                 ),
                 if (completed) ...[
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   GestureDetector(
                     onTap: onStrengthTap,
                     behavior: HitTestBehavior.opaque,
@@ -94,7 +94,7 @@ class ProgressGridItem extends StatelessWidget {
                   ),
                 ],
                 if (noteCount > 0 || onNoteTap != null) ...[
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   GestureDetector(
                     onTap: onNoteTap,
                     behavior: HitTestBehavior.opaque,
@@ -117,10 +117,10 @@ class ProgressGridItem extends StatelessWidget {
                                 : Colors.white54,
                           ),
                           if (noteCount > 0) ...[
-                            const SizedBox(width: 2),
+                            SizedBox(width: 2),
                             Text(
                               '$noteCount',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.lavenderPurple,

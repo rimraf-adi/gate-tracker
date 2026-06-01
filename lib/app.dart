@@ -5,6 +5,8 @@ import 'screens/custom_exam_form_screen.dart';
 import 'screens/mock_test_screen.dart';
 import 'screens/topic_notes_screen.dart';
 import 'screens/session_history_screen.dart';
+import 'screens/revision_history_screen.dart';
+import 'screens/full_heatmap_screen.dart';
 import 'theme/app_theme.dart';
 
 class GateTrackerApp extends StatelessWidget {
@@ -37,6 +39,16 @@ class GateTrackerApp extends StatelessWidget {
         if (settings.name == '/session-history') {
           return MaterialPageRoute(
             builder: (context) => const SessionHistoryScreen(),
+          );
+        }
+        if (settings.name == '/revision-history') {
+          return MaterialPageRoute(
+            builder: (context) => const RevisionHistoryScreen(),
+          );
+        }
+        if (settings.name == '/full-heatmap') {
+          return MaterialPageRoute(
+            builder: (context) => const FullHeatmapScreen(),
           );
         }
         if (settings.name == '/topic-notes') {
