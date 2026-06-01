@@ -50,6 +50,12 @@ final topicStrengthProvider = FutureProvider.family<Map<String, int>, int>((ref,
   return await dbHelper.getTopicStrengthCounts(subjectId);
 });
 
+// --- Topic Strength Details Provider ---
+final topicStrengthDetailsProvider = FutureProvider.family<List<Map<String, dynamic>>, int>((ref, subjectId) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getTopicStrengthDetails(subjectId);
+});
+
 // --- Topic Providers ---
 final topicsBySubjectProvider = FutureProvider.family<List<Topic>, int>((ref, subjectId) async {
   final dbHelper = ref.watch(databaseHelperProvider);
@@ -98,6 +104,7 @@ class TopicProgressNotifier extends StateNotifier<ProgressStatus> {
     // Invalidate related providers
     ref.invalidate(subjectProgressProvider(subjectId));
     ref.invalidate(topicStrengthProvider(subjectId));
+    ref.invalidate(topicStrengthDetailsProvider(subjectId));
     ref.invalidate(aggregateProgressProvider(paperId));
     ref.invalidate(weakTopicsProvider(paperId));
     ref.invalidate(studySessionHistoryProvider);
@@ -105,6 +112,9 @@ class TopicProgressNotifier extends StateNotifier<ProgressStatus> {
     ref.invalidate(totalStudyHoursProvider);
     ref.invalidate(totalStudySessionsCountProvider);
     ref.invalidate(currentStreakProvider);
+    ref.invalidate(completedTopicsTodayProvider);
+    ref.invalidate(totalCompletedTopicsProvider(paperId));
+    ref.invalidate(completedSubjectsCountProvider(paperId));
   }
 }
 
@@ -227,3 +237,37 @@ final upcomingScheduleProvider = FutureProvider<List<Map<String, dynamic>>>((ref
   final end = today.add(const Duration(days: 14));
   return await dbHelper.getScheduledEventsInRange(start, end);
 });
+
+// --- Calendar/Home Screen Metric Providers ---
+// These replace raw FutureBuilder calls so metrics update reactively.
+
+final completedTopicsTodayProvider = FutureProvider<int>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getCompletedTopicsCountToday();
+});
+
+final scheduledEventsTodayCountProvider = FutureProvider<int>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getScheduledEventsForTodayCount();
+});
+
+final totalCompletedTopicsProvider = FutureProvider.family<int, int>((ref, paperId) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.countTopicsByStatus(paperId, ProgressStatus.completed);
+});
+
+final totalMockTestsCountProvider = FutureProvider.family<int, int>((ref, paperId) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getTotalMockTestsCount(paperId);
+});
+
+final averageMockScoreProvider = FutureProvider.family<double, int>((ref, paperId) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getAverageMockScorePercentage(paperId);
+});
+
+final completedSubjectsCountProvider = FutureProvider.family<int, int>((ref, paperId) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getCompletedSubjectsCount(paperId);
+});
+

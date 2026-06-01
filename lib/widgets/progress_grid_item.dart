@@ -68,20 +68,24 @@ class ProgressGridItem extends StatelessWidget {
                         ),
                   ),
                 ),
-                if (strength != null) ...[
+                if (completed) ...[
                   const SizedBox(width: 6),
                   GestureDetector(
                     onTap: onStrengthTap,
+                    behavior: HitTestBehavior.opaque,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _strengthColor(strength!).withValues(alpha: 0.15),
+                        color: strength != null
+                            ? _strengthColor(strength!).withValues(alpha: 0.15)
+                            : Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: strength == null ? Border.all(color: Colors.white12) : null,
                       ),
                       child: Text(
-                        strength!,
+                        strength ?? '+',
                         style: TextStyle(
-                          color: _strengthColor(strength!),
+                          color: strength != null ? _strengthColor(strength!) : Colors.white38,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
@@ -93,6 +97,7 @@ class ProgressGridItem extends StatelessWidget {
                   const SizedBox(width: 4),
                   GestureDetector(
                     onTap: onNoteTap,
+                    behavior: HitTestBehavior.opaque,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(

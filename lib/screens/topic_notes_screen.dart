@@ -228,6 +228,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                               await DatabaseHelper.instance.addNote(note);
                               ref.invalidate(topicNotesProvider(widget.topicId));
                               ref.invalidate(topicNoteCountProvider(widget.topicId));
+                              ref.invalidate(totalNotesCountProvider);
 
                               if (context.mounted) {
                                 Navigator.pop(context);
@@ -374,6 +375,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
       await DatabaseHelper.instance.deleteNote(note.id!);
       ref.invalidate(topicNotesProvider(widget.topicId));
       ref.invalidate(topicNoteCountProvider(widget.topicId));
+      ref.invalidate(totalNotesCountProvider);
     }
   }
 

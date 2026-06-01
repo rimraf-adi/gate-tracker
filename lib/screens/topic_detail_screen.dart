@@ -283,8 +283,12 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
       ref.invalidate(topicsBySubjectProvider(widget.subjectId));
       ref.invalidate(subjectProgressProvider(widget.subjectId));
       ref.invalidate(topicStrengthProvider(widget.subjectId));
+      ref.invalidate(topicStrengthDetailsProvider(widget.subjectId));
       final paperId = ref.read(selectedPaperIdProvider);
       ref.invalidate(aggregateProgressProvider(paperId));
+      ref.invalidate(completedTopicsTodayProvider);
+      ref.invalidate(totalCompletedTopicsProvider(paperId));
+      ref.invalidate(completedSubjectsCountProvider(paperId));
 
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
@@ -304,7 +308,11 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                   ref.invalidate(topicsBySubjectProvider(widget.subjectId));
                   ref.invalidate(subjectProgressProvider(widget.subjectId));
                   ref.invalidate(topicStrengthProvider(widget.subjectId));
+                  ref.invalidate(topicStrengthDetailsProvider(widget.subjectId));
                   ref.invalidate(aggregateProgressProvider(paperId));
+                  ref.invalidate(completedTopicsTodayProvider);
+                  ref.invalidate(totalCompletedTopicsProvider(paperId));
+                  ref.invalidate(completedSubjectsCountProvider(paperId));
                 }
               },
             ),
@@ -480,78 +488,106 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                     );
                   }
 
-                  return FutureBuilder<List<Map<String, dynamic>>>(
-                    future: DatabaseHelper.instance.getTopicStrengthDetails(widget.subjectId),
-                    builder: (context, snapshot) {
-                      final strengthMap = <int, String>{};
-                      if (snapshot.hasData) {
-                        for (final d in snapshot.data!) {
-                          strengthMap[d['id'] as int] = d['strength'] as String;
-                        }
-                      }
+                  final strengthAsync = ref.watch(topicStrengthDetailsProvider(widget.subjectId));
+                  final strengthMap = <int, String?>{};
+                  final details = strengthAsync.valueOrNull ?? [];
+                  for (final d in details) {
+                    strengthMap[d['id'] as int] = d['strength'] as String?;
+                  }
 
-                      return ListView(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 24).copyWith(bottom: 100),
-                        children: topics.map((topic) {
-                          final strength = strengthMap[topic.id] ?? 'mid';
-                      if (_isEditing) {
-                        return Container(
-                          key: ValueKey(topic.id),
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.drag_indicator_rounded, color: Colors.white54, size: 20),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(topic.name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                  // Group topics by chapter
+                  final chapterGroups = <String, List<Topic>>{};
+                  for (final topic in topics) {
+                    final ch = topic.chapter.isEmpty ? 'General' : topic.chapter;
+                    chapterGroups.putIfAbsent(ch, () => []).add(topic);
+                  }
+
+                  return ListView(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24).copyWith(bottom: 100),
+                    children: chapterGroups.entries.map((entry) {
+                      final chapterName = entry.key;
+                      final chapterTopics = entry.value;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.darkSurface,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(chapterName,
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold, color: AppColors.textWhite,
                               ),
-                              _StrengthBadge(strength, topicId: topic.id!, subjectId: widget.subjectId),
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, color: Colors.white70, size: 20),
-                                onPressed: () => _showRenameDialog(topic),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                                onPressed: () => _deleteTopic(topic),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                      final progressState = ref.watch(topicProgressProvider(topic.id!));
-                      final noteCountAsync = ref.watch(topicNoteCountProvider(topic.id!));
-                      final noteCount = noteCountAsync.valueOrNull ?? 0;
-                      return ProgressGridItem(
-                        label: topic.name,
-                        completed: progressState == ProgressStatus.completed,
-                        status: progressState,
-                        strength: strength,
-                        noteCount: noteCount,
-                        onTap: () {
-                          ref.read(topicProgressProvider(topic.id!).notifier)
-                              .toggle(subjectId: widget.subjectId, paperId: paperId);
-                        },
-                        onNoteTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/topic-notes',
-                            arguments: {'topicId': topic.id!, 'topicName': topic.name},
-                          );
-                        },
-                        onStrengthTap: () async {
-                          final next = strength == 'strong' ? 'mid' : strength == 'mid' ? 'weak' : 'auto';
-                          final newVal = next == 'auto' ? null : next;
-                          await DatabaseHelper.instance.setManualStrength(topic.id!, newVal);
-                          ref.invalidate(topicStrengthProvider(widget.subjectId));
-                          ref.invalidate(subjectProgressProvider(widget.subjectId));
-                        },
+                            ),
+                            const SizedBox(height: 12),
+                            if (_isEditing)
+                              ...chapterTopics.map((topic) {
+                                final String? strength = strengthMap[topic.id];
+                                return Container(
+                                  key: ValueKey(topic.id),
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.drag_indicator_rounded, color: Colors.white54, size: 20),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(topic.name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                                      ),
+                                      _StrengthBadge(strength, topicId: topic.id!, subjectId: widget.subjectId),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, color: Colors.white70, size: 20),
+                                        onPressed: () => _showRenameDialog(topic),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                                        onPressed: () => _deleteTopic(topic),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              })
+                            else
+                              ...chapterTopics.map((topic) {
+                                final String? strength = strengthMap[topic.id];
+                                final progressState = ref.watch(topicProgressProvider(topic.id!));
+                                final noteCountAsync = ref.watch(topicNoteCountProvider(topic.id!));
+                                final noteCount = noteCountAsync.valueOrNull ?? 0;
+                                return ProgressGridItem(
+                                  label: topic.name,
+                                  completed: progressState == ProgressStatus.completed,
+                                  status: progressState,
+                                  strength: strength,
+                                  noteCount: noteCount,
+                                  onTap: () {
+                                    ref.read(topicProgressProvider(topic.id!).notifier)
+                                        .toggle(subjectId: widget.subjectId, paperId: paperId);
+                                  },
+                                  onNoteTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/topic-notes',
+                                      arguments: {'topicId': topic.id!, 'topicName': topic.name},
+                                    );
+                                  },
+                                  onStrengthTap: () async {
+                                    final next = strength == null || strength == 'weak' ? 'strong' : strength == 'strong' ? 'mid' : 'weak';
+                                    await DatabaseHelper.instance.setManualStrength(topic.id!, next);
+                                    ref.invalidate(topicStrengthDetailsProvider(widget.subjectId));
+                                    ref.invalidate(topicStrengthProvider(widget.subjectId));
+                                    ref.invalidate(subjectProgressProvider(widget.subjectId));
+                                  },
+                                );
+                              }),
+                          ],
+                        ),
                       );
                     }).toList(),
                   );
-                },
-              );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error: $e')),
@@ -576,20 +612,20 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
 }
 
 class _StrengthBadge extends ConsumerWidget {
-  final String strength;
+  final String? strength;
   final int topicId;
   final int subjectId;
 
   const _StrengthBadge(this.strength, {required this.topicId, required this.subjectId});
 
-  String _next(String current) {
+  String? _next(String? current) {
+    if (current == null || current == 'weak') return 'strong';
     if (current == 'strong') return 'mid';
     if (current == 'mid') return 'weak';
-    if (current == 'weak') return 'auto';
     return 'strong';
   }
 
-  Color _color(String s) {
+  Color _color(String? s) {
     switch (s) {
       case 'strong': return const Color(0xFF4CAF50);
       case 'mid': return Colors.orange;
@@ -601,25 +637,26 @@ class _StrengthBadge extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final display = strength;
-    final color = _color(display);
+    final color = display != null ? _color(display) : Colors.white38;
 
     return GestureDetector(
       onTap: () async {
         final next = _next(display);
-        final newVal = next == 'auto' ? null : next;
-        await DatabaseHelper.instance.setManualStrength(topicId, newVal);
+        await DatabaseHelper.instance.setManualStrength(topicId, next);
+        ref.invalidate(topicStrengthDetailsProvider(subjectId));
         ref.invalidate(topicStrengthProvider(subjectId));
         ref.invalidate(subjectProgressProvider(subjectId));
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
+          color: display != null ? color.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: display == null ? Border.all(color: Colors.white12) : null,
         ),
         child: Text(
-          display,
-          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+          display ?? '+',
+          style: TextStyle(color: display != null ? color : Colors.white38, fontSize: 10, fontWeight: FontWeight.bold),
         ),
       ),
     );

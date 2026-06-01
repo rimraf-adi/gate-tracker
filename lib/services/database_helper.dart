@@ -451,15 +451,34 @@ class DatabaseHelper {
 
   Future<void> setManualStrength(int topicId, String? strength) async {
     final db = await instance.database;
-    await db.insert(
+    final existing = await db.query(
       'topic_progress',
-      {
-        'topic_id': topicId,
-        'status': 'pending',
-        'manual_strength': strength,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'topic_id = ?',
+      whereArgs: [topicId],
+      limit: 1,
     );
+    
+    if (existing.isNotEmpty) {
+      await db.update(
+        'topic_progress',
+        {
+          'manual_strength': strength,
+          'last_updated': _todayDateStr(),
+        },
+        where: 'topic_id = ?',
+        whereArgs: [topicId],
+      );
+    } else {
+      await db.insert(
+        'topic_progress',
+        {
+          'topic_id': topicId,
+          'status': 'completed',
+          'manual_strength': strength,
+          'last_updated': _todayDateStr(),
+        },
+      );
+    }
   }
 
   Future<void> resetAllProgress() async {
@@ -1123,16 +1142,16 @@ class DatabaseHelper {
     final db = await instance.database;
     final result = await db.rawQuery('''
       SELECT tp.manual_strength FROM topics t
-      LEFT JOIN topic_progress tp ON t.id = tp.topic_id
+      JOIN topic_progress tp ON t.id = tp.topic_id AND tp.status = 'completed'
       WHERE t.subject_id = ?
     ''', [subjectId]);
 
     int strong = 0, mid = 0, weak = 0;
     for (final row in result) {
-      final manual = row['manual_strength'] as String? ?? 'mid';
+      final manual = row['manual_strength'] as String?;
       if (manual == 'strong') strong++;
+      else if (manual == 'mid') mid++;
       else if (manual == 'weak') weak++;
-      else mid++;
     }
     return {'strong': strong, 'mid': mid, 'weak': weak};
   }
@@ -1140,13 +1159,13 @@ class DatabaseHelper {
   /// Returns per-subject strong/mid/weak counts for radar chart
   Future<List<Map<String, dynamic>>> getSubjectStrengthRadar(int paperId) async {
     final db = await instance.database;
-    // Fully manual strength — no auto-computation
+    // Only count completed topics with manual_strength labels
     final result = await db.rawQuery('''
       SELECT s.id, s.name as subject_name,
         COUNT(t.id) as total,
-        SUM(CASE WHEN COALESCE(tp.manual_strength, 'mid') = 'strong' THEN 1 ELSE 0 END) as strong,
-        SUM(CASE WHEN COALESCE(tp.manual_strength, 'mid') = 'mid' THEN 1 ELSE 0 END) as mid,
-        SUM(CASE WHEN COALESCE(tp.manual_strength, 'mid') = 'weak' THEN 1 ELSE 0 END) as weak
+        SUM(CASE WHEN tp.status = 'completed' AND tp.manual_strength = 'strong' THEN 1 ELSE 0 END) as strong,
+        SUM(CASE WHEN tp.status = 'completed' AND tp.manual_strength = 'mid' THEN 1 ELSE 0 END) as mid,
+        SUM(CASE WHEN tp.status = 'completed' AND tp.manual_strength = 'weak' THEN 1 ELSE 0 END) as weak
       FROM subjects s
       LEFT JOIN topics t ON t.subject_id = s.id
       LEFT JOIN topic_progress tp ON t.id = tp.topic_id
@@ -1178,12 +1197,13 @@ class DatabaseHelper {
 
     final List<Map<String, dynamic>> details = [];
     for (final row in result) {
-      final manual = row['manual_strength'] as String? ?? 'mid';
+      final status = row['status'] as String? ?? 'pending';
+      final manual = (status == 'completed') ? row['manual_strength'] as String? : null;
       details.add({
         'id': row['id'] as int,
         'name': row['name'] as String,
         'strength': manual,
-        'status': (row['status'] as String?) ?? 'pending',
+        'status': status,
         'sessions': 0,
         'last_studied': null,
       });

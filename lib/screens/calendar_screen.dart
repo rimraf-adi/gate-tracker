@@ -48,6 +48,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     ref.invalidate(totalStudyHoursProvider);
     ref.invalidate(totalStudySessionsCountProvider);
     ref.invalidate(currentStreakProvider);
+    ref.invalidate(completedTopicsTodayProvider);
+    ref.invalidate(scheduledEventsTodayCountProvider);
+    final paperId = ref.read(selectedPaperIdProvider);
+    ref.invalidate(totalCompletedTopicsProvider(paperId));
+    ref.invalidate(totalMockTestsCountProvider(paperId));
+    ref.invalidate(averageMockScoreProvider(paperId));
+    ref.invalidate(completedSubjectsCountProvider(paperId));
+    ref.invalidate(aggregateProgressProvider(paperId));
+    ref.invalidate(totalNotesCountProvider);
   }
 
   @override
@@ -115,40 +124,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   _TodayMiniStats(),
                   const SizedBox(height: 24),
 
-                  // Today's Schedule Header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.event_note_rounded, color: AppColors.lavenderPurple, size: 20),
-                        const SizedBox(width: 8),
-                        Text("Today's Schedule", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                        const Spacer(),
-                        TextButton.icon(
-                          onPressed: _showScheduleForm,
-                          icon: const Icon(Icons.add_rounded, size: 18, color: AppColors.lavenderPurple),
-                          label: const Text('Add', style: TextStyle(color: AppColors.lavenderPurple, fontWeight: FontWeight.bold, fontSize: 13)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _TodayScheduleList(),
-                  const SizedBox(height: 24),
-
-                  // Upcoming
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_month_rounded, color: Colors.orange, size: 20),
-                        const SizedBox(width: 8),
-                        Text('Upcoming (14 days)', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _UpcomingScheduleList(),
+                  // Metrics Bento Grid
+                  _BentoMetricsGrid(),
                   const SizedBox(height: 20),
 
                   // Quick Actions
@@ -166,7 +143,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ],
               ),
             ),
-            SliverPadding(padding: const EdgeInsets.only(bottom: 100), sliver: SliverToBoxAdapter(child: const SizedBox.shrink())),
+            const SliverPadding(padding: EdgeInsets.only(bottom: 100), sliver: SliverToBoxAdapter(child: SizedBox.shrink())),
           ],
         ),
       ),
@@ -176,44 +153,28 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
 // ─── Today's Mini Stats ───
 
-class _TodayMiniStats extends ConsumerStatefulWidget {
+class _TodayMiniStats extends ConsumerWidget {
   @override
-  ConsumerState<_TodayMiniStats> createState() => _TodayMiniStatsState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final completed = ref.watch(completedTopicsTodayProvider).value ?? 0;
+    final planned = ref.watch(scheduledEventsTodayCountProvider).value ?? 0;
+    final totalMin = ref.watch(totalStudyHoursProvider).value ?? 0;
+    final streak = ref.watch(currentStreakProvider).value ?? 0;
+    final totalHours = (totalMin / 60).round();
 
-class _TodayMiniStatsState extends ConsumerState<_TodayMiniStats> {
-  @override
-  Widget build(BuildContext context) {
-    final db = DatabaseHelper.instance;
-    return FutureBuilder<List<int>>(
-      future: Future.wait([
-        db.getCompletedTopicsCountToday(),
-        db.getScheduledEventsForTodayCount(),
-        db.getTotalStudyHoursAllTime(),
-        db.getCurrentStreak(),
-      ]),
-      builder: (context, snapshot) {
-        final completed = snapshot.hasData ? snapshot.data![0] : 0;
-        final planned = snapshot.hasData ? snapshot.data![1] : 0;
-        final totalMin = snapshot.hasData ? snapshot.data![2] : 0;
-        final streak = snapshot.hasData ? snapshot.data![3] : 0;
-        final totalHours = (totalMin / 60).round();
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            children: [
-              _MiniChip(icon: Icons.check_circle_rounded, value: '$completed', label: 'done today', color: const Color(0xFF4CAF50)),
-              const SizedBox(width: 10),
-              _MiniChip(icon: Icons.event_note_rounded, value: '$planned', label: 'planned', color: const Color(0xFF42A5F5)),
-              const SizedBox(width: 10),
-              _MiniChip(icon: Icons.timer_rounded, value: '${totalHours}h', label: 'studied', color: Colors.orange),
-              const SizedBox(width: 10),
-              _MiniChip(icon: Icons.local_fire_department_rounded, value: '$streak', label: 'day streak', color: AppColors.lavenderPurple),
-            ],
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        children: [
+          _MiniChip(icon: Icons.check_circle_rounded, value: '$completed', label: 'done today', color: const Color(0xFF4CAF50)),
+          const SizedBox(width: 10),
+          _MiniChip(icon: Icons.event_note_rounded, value: '$planned', label: 'planned', color: const Color(0xFF42A5F5)),
+          const SizedBox(width: 10),
+          _MiniChip(icon: Icons.timer_rounded, value: '${totalHours}h', label: 'studied', color: Colors.orange),
+          const SizedBox(width: 10),
+          _MiniChip(icon: Icons.local_fire_department_rounded, value: '$streak', label: 'day streak', color: AppColors.lavenderPurple),
+        ],
+      ),
     );
   }
 }
@@ -242,182 +203,195 @@ class _MiniChip extends StatelessWidget {
   }
 }
 
-// ─── Today's Schedule (Todo List) ───
+// ─── Bento Metrics Grid ───
 
-class _TodayScheduleList extends ConsumerWidget {
+class _BentoMetricsGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheduleAsync = ref.watch(scheduleForTodayProvider);
-    return scheduleAsync.when(
-      data: (items) {
-        if (items.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: AppColors.darkSurface, borderRadius: BorderRadius.circular(AppRadius.card)),
-              child: Column(children: [
-                const Icon(Icons.event_available_rounded, size: 40, color: Colors.white24),
-                const SizedBox(height: 12),
-                const Text('No tasks scheduled for today', style: TextStyle(color: Colors.white54, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text('Tap "Add" to schedule your study plan', style: const TextStyle(color: Colors.white38, fontSize: 13)),
-              ]),
-            ),
-          );
-        }
+    final paperId = ref.watch(selectedPaperIdProvider);
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Container(
-            decoration: BoxDecoration(color: AppColors.darkSurface, borderRadius: BorderRadius.circular(AppRadius.card)),
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: Colors.white10),
-              itemBuilder: (context, i) {
-                final item = items[i];
-                final topicName = item['topic_name'] as String? ?? '';
-                final subjectName = item['subject_name'] as String? ?? '';
-                final isDone = (item['is_completed'] as int? ?? 0) == 1;
+    final totalMin = ref.watch(totalStudyHoursProvider).value ?? 0;
+    final streak = ref.watch(currentStreakProvider).value ?? 0;
+    final doneToday = ref.watch(completedTopicsTodayProvider).value ?? 0;
+    final notes = ref.watch(totalNotesCountProvider).value ?? 0;
+    final totalDone = ref.watch(totalCompletedTopicsProvider(paperId)).value ?? 0;
+    final mockCount = ref.watch(totalMockTestsCountProvider(paperId)).value ?? 0;
+    final mockAvg = ref.watch(averageMockScoreProvider(paperId)).value ?? 0.0;
+    final subjectsDone = ref.watch(completedSubjectsCountProvider(paperId)).value ?? 0;
+    final progress = ref.watch(aggregateProgressProvider(paperId)).value ?? 0.0;
 
-                return _ScheduleTodoTile(
-                  topicName: topicName,
-                  subjectName: subjectName,
-                  isDone: isDone,
-                  eventId: item['id'] as int,
-                );
-              },
-            ),
+    final hours = (totalMin / 60).round();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          // Row 1: Streak (big) + Hours (small)
+          Row(
+            children: [
+              Expanded(flex: 3, child: _BentoCard(
+                icon: Icons.local_fire_department_rounded,
+                value: '$streak',
+                label: 'Day Streak',
+                color: Colors.orange,
+                large: true,
+              )),
+              const SizedBox(width: 10),
+              Expanded(flex: 2, child: _BentoCard(
+                icon: Icons.timer_rounded,
+                value: '${hours}h',
+                label: 'Studied',
+                color: AppColors.lavenderPurple,
+              )),
+            ],
           ),
-        );
-      },
-      loading: () => const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Padding(padding: const EdgeInsets.all(24), child: Text('$e')),
-    );
-  }
-}
+          const SizedBox(height: 10),
 
-class _ScheduleTodoTile extends ConsumerWidget {
-  final String topicName;
-  final String subjectName;
-  final bool isDone;
-  final int eventId;
+          // Row 2: Overall Progress (wide)
+          _BentoProgressCard(label: 'Overall Progress', value: '${(progress * 100).toInt()}%', progress: progress),
+          const SizedBox(height: 10),
 
-  const _ScheduleTodoTile({required this.topicName, required this.subjectName, required this.isDone, required this.eventId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      leading: GestureDetector(
-        onTap: () async {
-          await DatabaseHelper.instance.toggleScheduledEvent(eventId, !isDone);
-          ref.invalidate(scheduleForTodayProvider);
-          ref.invalidate(upcomingScheduleProvider);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          width: 24, height: 24,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isDone ? AppColors.lavenderPurple : Colors.transparent,
-            border: Border.all(color: isDone ? AppColors.lavenderPurple : Colors.white38, width: 2),
+          // Row 3: Topics done + Notes
+          Row(
+            children: [
+              Expanded(child: _BentoCard(
+                icon: Icons.check_circle_rounded,
+                value: '$totalDone',
+                label: 'Topics Done',
+                color: const Color(0xFF4CAF50),
+              )),
+              const SizedBox(width: 10),
+              Expanded(child: _BentoCard(
+                icon: Icons.sticky_note_2_rounded,
+                value: '$notes',
+                label: 'Notes',
+                color: const Color(0xFF42A5F5),
+              )),
+              const SizedBox(width: 10),
+              Expanded(child: _BentoCard(
+                icon: Icons.menu_book_rounded,
+                value: '$doneToday',
+                label: 'Done Today',
+                color: AppColors.lavenderPurple,
+              )),
+            ],
           ),
-          child: isDone ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
-        ),
-      ),
-      title: Text(topicName, style: TextStyle(
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-        decoration: isDone ? TextDecoration.lineThrough : null,
-        decorationColor: Colors.white54,
-      )),
-      subtitle: Text(subjectName, style: TextStyle(color: Colors.white54, fontSize: 12, decoration: isDone ? TextDecoration.lineThrough : null, decorationColor: Colors.white38)),
-      trailing: GestureDetector(
-        onTap: () async {
-          await DatabaseHelper.instance.deleteScheduledEvent(eventId);
-          ref.invalidate(scheduleForTodayProvider);
-          ref.invalidate(upcomingScheduleProvider);
-        },
-        child: Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(AppRadius.pill)),
-          child: const Icon(Icons.close_rounded, size: 16, color: Colors.white38),
-        ),
+          const SizedBox(height: 10),
+
+          // Row 4: Sessions + Mock Avg
+          Row(
+            children: [
+              Expanded(child: _BentoCard(
+                icon: Icons.quiz_rounded,
+                value: '$mockCount',
+                label: 'Mock Tests',
+                color: Colors.orange,
+              )),
+              const SizedBox(width: 10),
+              Expanded(flex: 2, child: _BentoCard(
+                icon: Icons.analytics_rounded,
+                value: mockCount > 0 ? '${mockAvg.toStringAsFixed(0)}%' : '—',
+                label: 'Mock Average',
+                color: const Color(0xFF42A5F5),
+              )),
+              const SizedBox(width: 10),
+              Expanded(child: _BentoCard(
+                icon: Icons.assignment_turned_in_rounded,
+                value: '$subjectsDone',
+                label: 'Subjects',
+                color: const Color(0xFF4CAF50),
+              )),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-// ─── Upcoming Schedule ───
+class _BentoCard extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  final bool large;
 
-class _UpcomingScheduleList extends ConsumerWidget {
+  const _BentoCard({
+    required this.icon, required this.value, required this.label, required this.color,
+    this.large = false,
+  });
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final upcomingAsync = ref.watch(upcomingScheduleProvider);
-    return upcomingAsync.when(
-      data: (items) {
-        if (items.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Text('No upcoming tasks', style: TextStyle(color: Colors.white38, fontSize: 14)),
-          );
-        }
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(large ? 20 : 14),
+      decoration: BoxDecoration(
+        color: AppColors.darkSurface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: large ? 28 : 20),
+          SizedBox(height: large ? 12 : 8),
+          Text(value, style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.bold, color: Colors.white, fontSize: large ? 36 : 28,
+          )),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: large ? 13 : 11)),
+        ],
+      ),
+    );
+  }
+}
 
-        // Group by date
-        final grouped = <String, List<Map<String, dynamic>>>{};
-        for (final item in items) {
-          final dateStr = (item['scheduled_date'] as String).substring(0, 10);
-          grouped.putIfAbsent(dateStr, () => []).add(item);
-        }
+class _BentoProgressCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final double progress;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: grouped.entries.map((entry) {
-              final date = DateTime.tryParse(entry.key);
-              final label = date != null
-                  ? (date.difference(DateTime.now()).inDays == 1
-                      ? 'Tomorrow'
-                      : DateFormat('MMM d, EEE').format(date))
-                  : entry.key;
-              final items = entry.value;
+  const _BentoProgressCard({required this.label, required this.value, required this.progress});
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(color: AppColors.darkSurface, borderRadius: BorderRadius.circular(AppRadius.small)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(label, style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 13)),
-                      const SizedBox(height: 8),
-                      ...items.map((item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Row(
-                          children: [
-                            Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.lavenderPurple, shape: BoxShape.circle)),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(item['topic_name'] as String? ?? '', style: const TextStyle(color: Colors.white, fontSize: 14))),
-                            Text(item['subject_name'] as String? ?? '', style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                          ],
-                        ),
-                      )),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.darkSurface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 56, height: 56,
+            child: Stack(alignment: Alignment.center, children: [
+              CircularProgressIndicator(
+                value: progress,
+                strokeWidth: 5,
+                backgroundColor: Colors.white10,
+                valueColor: const AlwaysStoppedAnimation(AppColors.lavenderPurple),
+              ),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+            ]),
           ),
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+          const SizedBox(width: 16),
+          Text(label, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.lavenderPurple.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.lavenderPurple, shape: BoxShape.circle)),
+              const SizedBox(width: 4),
+              Text('On Track', style: TextStyle(color: AppColors.lavenderPurple, fontSize: 11, fontWeight: FontWeight.bold)),
+            ]),
+          ),
+        ],
+      ),
     );
   }
 }

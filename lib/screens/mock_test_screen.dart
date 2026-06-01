@@ -116,6 +116,8 @@ class MockTestScreen extends ConsumerWidget {
                           final db = DatabaseHelper.instance;
                           await db.deleteMockTest(test.id!);
                           ref.invalidate(mockTestsByPaperProvider(paperId));
+                          ref.invalidate(totalMockTestsCountProvider(paperId));
+                          ref.invalidate(averageMockScoreProvider(paperId));
 
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).clearSnackBars();
@@ -128,6 +130,8 @@ class MockTestScreen extends ConsumerWidget {
                                   onPressed: () async {
                                     await db.addMockTest(test);
                                     ref.invalidate(mockTestsByPaperProvider(paperId));
+                                    ref.invalidate(totalMockTestsCountProvider(paperId));
+                                    ref.invalidate(averageMockScoreProvider(paperId));
                                   },
                                 ),
                               ),
@@ -434,6 +438,8 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
 
                           await DatabaseHelper.instance.addMockTest(mockTest);
                           ref.invalidate(mockTestsByPaperProvider(widget.paperId));
+                          ref.invalidate(totalMockTestsCountProvider(widget.paperId));
+                          ref.invalidate(averageMockScoreProvider(widget.paperId));
 
                           if (context.mounted) {
                             Navigator.pop(context);

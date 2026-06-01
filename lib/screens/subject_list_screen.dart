@@ -83,6 +83,9 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
       );
       await db.insertSubject(newSubject);
       ref.invalidate(subjectsByPaperProvider(paperId));
+      ref.invalidate(completedSubjectsCountProvider(paperId));
+      ref.invalidate(totalCompletedTopicsProvider(paperId));
+      ref.invalidate(aggregateProgressProvider(paperId));
     }
   }
 
@@ -154,6 +157,9 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
 
       await db.deleteSubject(subject.id!);
       ref.invalidate(subjectsByPaperProvider(subject.paperId));
+      ref.invalidate(completedSubjectsCountProvider(subject.paperId));
+      ref.invalidate(totalCompletedTopicsProvider(subject.paperId));
+      ref.invalidate(aggregateProgressProvider(subject.paperId));
 
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
@@ -178,6 +184,9 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
                     }
                   }
                   ref.invalidate(subjectsByPaperProvider(subject.paperId));
+                  ref.invalidate(completedSubjectsCountProvider(subject.paperId));
+                  ref.invalidate(totalCompletedTopicsProvider(subject.paperId));
+                  ref.invalidate(aggregateProgressProvider(subject.paperId));
                 }
               },
             ),
