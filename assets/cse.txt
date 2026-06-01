@@ -1,0 +1,45 @@
+SYLLABUS : COMPUTER SCIENCE AND INFORMATION TECHNOLOGY
+Section 1: Engineering Mathematics
+Discrete Mathematics: Propositional and first order logic, Sets, relations, functions, partial orders and lattices, Monoids, Groups, Graphs: connectivity, matching, coloring, Combinatorics: counting, recurrence relations, generating functions
+Linear Algebra: Matrices, determinants, system of linear equations, eigenvalues and eigenvectors, LU decomposition
+Calculus: Limits, continuity and differentiability, Maxima and minima, Mean value theorem, Integration
+Probability and Statistics: Random variables, Uniform, normal, exponential, poisson and binomial distributions, Mean, median, mode and standard deviation, Conditional probability and Bayes theorem
+Section 2: Digital Logic
+Boolean Algebra & Minimization: Boolean algebra, Minimization
+Combinational & Sequential Circuits: Combinational and sequential circuits
+Computer Arithmetic: Number representations and computer arithmetic (fixed and floating point)
+Section 3: Computer Organization and Architecture
+Instructions & CPU: Machine instructions and addressing modes, ALU, data‐path and control unit
+Pipelining: Instruction pipelining, pipeline hazards
+Memory Hierarchy: Cache, main memory and secondary storage
+I/O Interface: I/O interface (interrupt and DMA mode)
+Section 4: Programming and Data Structures
+C Programming: Programming in C, Recursion
+Data Structures: Arrays, stacks, queues, linked lists, trees, binary search trees, binary heaps, graphs
+Section 5: Algorithms
+Analysis & Searching/Sorting: Searching, sorting, hashing, Asymptotic worst case time and space complexity
+Design Techniques: greedy, dynamic programming and divide‐and‐conquer
+Graph Algorithms: Graph traversals, minimum spanning trees, shortest paths
+Section 6: Theory of Computation
+Regular Languages & Finite Automata: Regular expressions and finite automata, Regular and context-free languages, pumping lemma
+Context-Free Languages & Pushdown Automata: Context-free grammars and push-down automata
+Computability & Undecidability: Turing machines and undecidability
+Section 7: Compiler Design
+Syntax Analysis: Lexical analysis, parsing, syntax-directed translation
+Code Generation: Runtime environments, Intermediate code generation
+Code Optimization: Local optimisation, Data flow analyses (constant propagation, liveness analysis, common subexpression elimination)
+Section 8: Operating System
+Process Management: System calls, processes, threads, inter‐process communication, concurrency and synchronization
+CPU Scheduling & Deadlocks: Deadlock, CPU and I/O scheduling
+Memory & Storage Management: Memory management and virtual memory, File systems
+Section 9: Databases
+Database Design: ER‐model, Relational model (relational algebra, tuple calculus), SQL, Integrity constraints, normal forms
+File Organization & Indexing: File organization, indexing (e.g. B and B+ trees)
+Transaction Management: Transactions and concurrency control
+Section 10: Computer Networks
+Layering & Switching: Concept of layering (OSI and TCP/IP Protocol Stacks), Basics of packet, circuit and virtual circuit-switching
+Data Link Layer: framing, error detection, Medium Access Control, Ethernet bridging
+Routing Protocols: shortest path, flooding, distance vector and link state routing
+Network Layer: Fragmentation and IP addressing, IPv4, CIDR notation, Basics of IP support protocols (ARP, DHCP, ICMP), Network Address Translation (NAT)
+Transport Layer: flow control and congestion control, UDP, TCP, sockets
+Application Layer: DNS, SMTP, HTTP, FTP, Email
