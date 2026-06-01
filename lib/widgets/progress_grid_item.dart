@@ -8,7 +8,9 @@ class ProgressGridItem extends StatelessWidget {
   final ProgressStatus status;
   final VoidCallback onTap;
   final VoidCallback? onNoteTap;
+  final VoidCallback? onStrengthTap;
   final int noteCount;
+  final String? strength;
 
   const ProgressGridItem({
     required this.label,
@@ -16,7 +18,9 @@ class ProgressGridItem extends StatelessWidget {
     required this.status,
     required this.onTap,
     this.onNoteTap,
+    this.onStrengthTap,
     this.noteCount = 0,
+    this.strength,
     super.key,
   });
 
@@ -46,7 +50,7 @@ class ProgressGridItem extends StatelessWidget {
                         : AppColors.lightGray,
                     border: completed
                         ? null
-                        : Border.all(color: Colors.black26, width: 1.5),
+                        : Border.all(color: Colors.white38, width: 1.5),
                   ),
                   child: completed
                       ? const Icon(Icons.check, size: 16, color: Colors.white)
@@ -58,12 +62,33 @@ class ProgressGridItem extends StatelessWidget {
                     label,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w500,
-                          color: Colors.black87,
+                          color: Colors.white,
                           decoration: completed ? TextDecoration.lineThrough : null,
-                          decorationColor: Colors.black38,
+                          decorationColor: Colors.white54,
                         ),
                   ),
                 ),
+                if (strength != null) ...[
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: onStrengthTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _strengthColor(strength!).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        strength!,
+                        style: TextStyle(
+                          color: _strengthColor(strength!),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 if (noteCount > 0 || onNoteTap != null) ...[
                   const SizedBox(width: 4),
                   GestureDetector(
@@ -84,7 +109,7 @@ class ProgressGridItem extends StatelessWidget {
                             size: 16,
                             color: noteCount > 0
                                 ? AppColors.lavenderPurple
-                                : Colors.black38,
+                                : Colors.white54,
                           ),
                           if (noteCount > 0) ...[
                             const SizedBox(width: 2),
@@ -108,5 +133,18 @@ class ProgressGridItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _strengthColor(String s) {
+    switch (s) {
+      case 'strong':
+        return const Color(0xFF4CAF50);
+      case 'mid':
+        return Colors.orange;
+      case 'weak':
+        return const Color(0xFFE57373);
+      default:
+        return Colors.white54;
+    }
   }
 }

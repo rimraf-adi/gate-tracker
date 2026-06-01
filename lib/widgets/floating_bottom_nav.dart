@@ -57,7 +57,7 @@ class FloatingBottomNav extends StatelessWidget {
                   ),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.add, color: Colors.black, size: 28),
+                child: const Icon(Icons.add, color: Colors.white, size: 28),
               ),
             ),
 

@@ -137,7 +137,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: const BoxDecoration(
-                                  color: Colors.black54,
+                                  color: Colors.white70,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.close, color: Colors.white, size: 18),
@@ -197,7 +197,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                         Expanded(
                           child: TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                            child: const Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -306,7 +306,7 @@ class _TopicNotesScreenState extends ConsumerState<TopicNotesScreen> {
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                        child: const Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                       ),
                     ),
                     const SizedBox(width: 12),

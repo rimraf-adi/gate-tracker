@@ -37,7 +37,7 @@ class FilterPills extends StatelessWidget {
                     child: Text(
                       label,
                       style: TextStyle(
-                        color: selected ? Colors.white : Colors.black87,
+                        color: selected ? Colors.white : Colors.white,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),

@@ -362,6 +362,7 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
 
   Widget _buildSubjectCard(Subject subject) {
     final progressAsync = ref.watch(subjectProgressProvider(subject.id!));
+    final strengthAsync = ref.watch(topicStrengthProvider(subject.id!));
 
     return progressAsync.when(
       data: (progress) {
@@ -369,10 +370,17 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
         final total = progress['total'] ?? 0;
         final ratio = total > 0 ? completed / total : 0.0;
 
+        final strength = strengthAsync.asData?.value ?? {'strong': 0, 'mid': 0, 'weak': 0};
+        final strong = strength['strong'] ?? 0;
+        final mid = strength['mid'] ?? 0;
+        final weak = strength['weak'] ?? 0;
+
         return GlassCard(
-          onTap: () {
-            Navigator.pushNamed(context, '/topics', arguments: subject.id);
-          },
+          onTap: subject.id != null
+              ? () {
+                  Navigator.pushNamed(context, '/topics', arguments: subject.id);
+                }
+              : null,
           child: Row(
             children: [
               Text(_emojiFor(subject.name), style: const TextStyle(fontSize: 32)),
@@ -388,11 +396,16 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
                             letterSpacing: -0.3,
                           ),
                     ),
-                    const SizedBox(height: 4),
-                      Text(
-                        '$completed / $total topics completed',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textGray),
-                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        _StrengthChip(label: '$strong strong', color: const Color(0xFF4CAF50)),
+                        const SizedBox(width: 6),
+                        _StrengthChip(label: '$mid mid', color: Colors.orange),
+                        const SizedBox(width: 6),
+                        _StrengthChip(label: '$weak weak', color: const Color(0xFFE57373)),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -404,6 +417,24 @@ class _SubjectListScreenState extends ConsumerState<SubjectListScreen> {
       },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _StrengthChip({required String label, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 

@@ -149,7 +149,7 @@ class _CustomExamFormScreenState extends ConsumerState<CustomExamFormScreen> {
                 const SizedBox(height: 4),
                 const Text(
                   'Format: Use "Section 1 : Subject" to start a section, and write comma-separated topics on lines below.',
-                  style: TextStyle(color: Colors.black54, fontSize: 12),
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -169,7 +169,7 @@ class _CustomExamFormScreenState extends ConsumerState<CustomExamFormScreen> {
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
-                          foregroundColor: Colors.black87,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
                         ),
@@ -189,7 +189,7 @@ class _CustomExamFormScreenState extends ConsumerState<CustomExamFormScreen> {
                   const SizedBox(height: 8),
                   const Text(
                     'Tap section titles or topics to edit them before saving.',
-                    style: TextStyle(color: Colors.black54, fontSize: 12),
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                   const SizedBox(height: 12),
                   ..._buildPreviewList(),
@@ -244,9 +244,9 @@ class _CustomExamFormScreenState extends ConsumerState<CustomExamFormScreen> {
                 initialValue: subject.name,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  prefixIcon: Icon(Icons.edit_rounded, size: 16, color: Colors.black38),
+                  prefixIcon: Icon(Icons.edit_rounded, size: 16, color: Colors.white54),
                 ),
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                 onChanged: (val) {
                   _parsedSubjects[subjectIndex] = subject.copyWith(name: val.trim());
                 },
@@ -277,7 +277,7 @@ class _CustomExamFormScreenState extends ConsumerState<CustomExamFormScreen> {
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Row(
                             children: [
-                              const Icon(Icons.subdirectory_arrow_right_rounded, size: 16, color: Colors.black38),
+                              const Icon(Icons.subdirectory_arrow_right_rounded, size: 16, color: Colors.white54),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: TextFormField(

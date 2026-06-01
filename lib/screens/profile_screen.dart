@@ -182,6 +182,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: Column(
                   children: [
                     _ActionRow(
+                      icon: Icons.history_rounded,
+                      label: 'View Study History',
+                      onTap: () => Navigator.pushNamed(context, '/session-history'),
+                    ),
+                    const SizedBox(height: 8),
+                    _ActionRow(
                       icon: Icons.add_circle_outline_rounded,
                       label: 'Create Custom Exam',
                       onTap: () => Navigator.pushNamed(context, '/add-custom-exam'),
@@ -209,6 +215,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         );
                         if (confirmed == true) {
                           await DatabaseHelper.instance.resetAllProgress();
+                          ref.invalidate(allPapersProvider);
+                          ref.invalidate(totalStudyHoursProvider);
+                          ref.invalidate(totalStudySessionsCountProvider);
+                          ref.invalidate(currentStreakProvider);
+                          ref.invalidate(totalNotesCountProvider);
+                          ref.invalidate(studySessionHistoryProvider);
+                          ref.invalidate(studyHoursPerDayProvider(7));
+                          ref.invalidate(activityHeatmapProvider(DateTime.now().subtract(const Duration(days: 365))));
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('All progress has been reset.')),
@@ -228,54 +242,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-class _GlobalStatsGrid extends ConsumerStatefulWidget {
+class _GlobalStatsGrid extends ConsumerWidget {
   @override
-  ConsumerState<_GlobalStatsGrid> createState() => _GlobalStatsGridState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hoursAsync = ref.watch(totalStudyHoursProvider);
+    final streakAsync = ref.watch(currentStreakProvider);
+    final notesAsync = ref.watch(totalNotesCountProvider);
+    final sessionsAsync = ref.watch(totalStudySessionsCountProvider);
 
-class _GlobalStatsGridState extends ConsumerState<_GlobalStatsGrid> {
-  late Future<int> _totalHoursFuture;
-  late Future<int> _streakFuture;
-  late Future<int> _notesFuture;
-  late Future<int> _sessionsCountFuture;
+    final totalHours = hoursAsync.valueOrNull != null ? (hoursAsync.valueOrNull! / 60).round() : 0;
+    final streak = streakAsync.valueOrNull ?? 0;
+    final notes = notesAsync.valueOrNull ?? 0;
+    final sessions = sessionsAsync.valueOrNull ?? 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _refresh();
-  }
-
-  void _refresh() {
-    final db = DatabaseHelper.instance;
-    _totalHoursFuture = db.getTotalStudyHoursAllTime();
-    _streakFuture = db.getCurrentStreak();
-    _notesFuture = db.getTotalNotesCount();
-    _sessionsCountFuture = db.getSessionsBetween(DateTime(2000), DateTime.now()).then((s) => s.length);
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: FutureBuilder(
-        future: Future.wait([_totalHoursFuture, _streakFuture, _notesFuture, _sessionsCountFuture]),
-        builder: (context, AsyncSnapshot<List<int>> snapshot) {
-          final totalHours = snapshot.hasData ? (snapshot.data![0] / 60).round() : 0;
-          final streak = snapshot.hasData ? snapshot.data![1] : 0;
-          final notes = snapshot.hasData ? snapshot.data![2] : 0;
-          final sessions = snapshot.hasData ? snapshot.data![3] : 0;
-
-          return Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _MiniStatCard(icon: Icons.timer_rounded, value: '$totalHours', label: 'Total Hours', color: AppColors.lavenderPurple),
-              _MiniStatCard(icon: Icons.local_fire_department_rounded, value: '$streak', label: 'Day Streak', color: Colors.orange),
-              _MiniStatCard(icon: Icons.notes_rounded, value: '$notes', label: 'Notes', color: const Color(0xFF4CAF50)),
-              _MiniStatCard(icon: Icons.menu_book_rounded, value: '$sessions', label: 'Sessions', color: const Color(0xFF42A5F5)),
-            ],
-          );
-        },
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: [
+          _MiniStatCard(icon: Icons.timer_rounded, value: '$totalHours', label: 'Total Hours', color: AppColors.lavenderPurple),
+          _MiniStatCard(icon: Icons.local_fire_department_rounded, value: '$streak', label: 'Day Streak', color: Colors.orange),
+          _MiniStatCard(icon: Icons.notes_rounded, value: '$notes', label: 'Notes', color: const Color(0xFF4CAF50)),
+          _MiniStatCard(icon: Icons.menu_book_rounded, value: '$sessions', label: 'Sessions', color: const Color(0xFF42A5F5)),
+        ],
       ),
     );
   }

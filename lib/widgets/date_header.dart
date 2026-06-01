@@ -23,7 +23,7 @@ class DateHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(_month, style: Theme.of(context).textTheme.headlineMedium?.copyWith(height: 1.1)),
-                Text(_weekday, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.black54)),
+                Text(_weekday, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70)),
               ],
             ),
           ),

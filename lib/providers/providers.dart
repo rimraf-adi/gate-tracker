@@ -44,6 +44,12 @@ final subjectProgressProvider = FutureProvider.family<Map<String, int>, int>((re
   };
 });
 
+// --- Topic Strength Provider ---
+final topicStrengthProvider = FutureProvider.family<Map<String, int>, int>((ref, subjectId) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getTopicStrengthCounts(subjectId);
+});
+
 // --- Topic Providers ---
 final topicsBySubjectProvider = FutureProvider.family<List<Topic>, int>((ref, subjectId) async {
   final dbHelper = ref.watch(databaseHelperProvider);
@@ -91,8 +97,14 @@ class TopicProgressNotifier extends StateNotifier<ProgressStatus> {
 
     // Invalidate related providers
     ref.invalidate(subjectProgressProvider(subjectId));
+    ref.invalidate(topicStrengthProvider(subjectId));
     ref.invalidate(aggregateProgressProvider(paperId));
     ref.invalidate(weakTopicsProvider(paperId));
+    ref.invalidate(studySessionHistoryProvider);
+    ref.invalidate(activityHeatmapProvider(DateTime.now().subtract(const Duration(days: 365))));
+    ref.invalidate(totalStudyHoursProvider);
+    ref.invalidate(totalStudySessionsCountProvider);
+    ref.invalidate(currentStreakProvider);
   }
 }
 
@@ -169,4 +181,49 @@ final calendarEventMarkersProvider = FutureProvider.family<Map<String, List<Stri
   final start = DateTime.parse(parts[0]);
   final end = DateTime.parse(parts[1]);
   return await dbHelper.getEventDatesInRange(start, end);
+});
+
+// --- Global Stats Providers (for Profile) ---
+final totalStudyHoursProvider = FutureProvider<int>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getTotalStudyHoursAllTime();
+});
+
+final currentStreakProvider = FutureProvider<int>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getCurrentStreak();
+});
+
+final totalNotesCountProvider = FutureProvider<int>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getTotalNotesCount();
+});
+
+final totalStudySessionsCountProvider = FutureProvider<int>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getSessionsBetween(DateTime(2000), DateTime.now()).then((s) => s.length);
+});
+
+final subjectStrengthRadarProvider = FutureProvider.family<List<Map<String, dynamic>>, int>((ref, paperId) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getSubjectStrengthRadar(paperId);
+});
+
+final studySessionHistoryProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getAllSessionsWithDetails();
+});
+
+// --- Schedule Providers ---
+final scheduleForTodayProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return await dbHelper.getPendingScheduledEventsOnDate(DateTime.now());
+});
+
+final upcomingScheduleProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  final today = DateTime.now();
+  final start = today.add(const Duration(days: 1));
+  final end = today.add(const Duration(days: 14));
+  return await dbHelper.getScheduledEventsInRange(start, end);
 });

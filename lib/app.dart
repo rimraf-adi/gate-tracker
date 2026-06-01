@@ -4,6 +4,7 @@ import 'screens/topic_detail_screen.dart';
 import 'screens/custom_exam_form_screen.dart';
 import 'screens/mock_test_screen.dart';
 import 'screens/topic_notes_screen.dart';
+import 'screens/session_history_screen.dart';
 import 'theme/app_theme.dart';
 
 class GateTrackerApp extends StatelessWidget {
@@ -31,6 +32,11 @@ class GateTrackerApp extends StatelessWidget {
         if (settings.name == '/mock-tests') {
           return MaterialPageRoute(
             builder: (context) => const MockTestScreen(),
+          );
+        }
+        if (settings.name == '/session-history') {
+          return MaterialPageRoute(
+            builder: (context) => const SessionHistoryScreen(),
           );
         }
         if (settings.name == '/topic-notes') {

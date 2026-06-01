@@ -141,6 +141,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
       
       // Update subject progress counts
       ref.invalidate(subjectProgressProvider(widget.subjectId));
+      ref.invalidate(topicStrengthProvider(widget.subjectId));
       final paperId = ref.read(selectedPaperIdProvider);
       ref.invalidate(aggregateProgressProvider(paperId));
     }
@@ -281,6 +282,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
       await db.deleteTopic(topic.id!);
       ref.invalidate(topicsBySubjectProvider(widget.subjectId));
       ref.invalidate(subjectProgressProvider(widget.subjectId));
+      ref.invalidate(topicStrengthProvider(widget.subjectId));
       final paperId = ref.read(selectedPaperIdProvider);
       ref.invalidate(aggregateProgressProvider(paperId));
 
@@ -301,6 +303,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                   }
                   ref.invalidate(topicsBySubjectProvider(widget.subjectId));
                   ref.invalidate(subjectProgressProvider(widget.subjectId));
+                  ref.invalidate(topicStrengthProvider(widget.subjectId));
                   ref.invalidate(aggregateProgressProvider(paperId));
                 }
               },
@@ -341,11 +344,11 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
             expandedHeight: 220.0,
             floating: false,
             pinned: true,
-            iconTheme: const IconThemeData(color: Colors.black87),
+            iconTheme: const IconThemeData(color: Colors.white),
             actions: [
               IconButton(
                 icon: Icon(_isEditing ? Icons.check_circle_rounded : Icons.edit_rounded),
-                color: Colors.black87,
+                color: Colors.white,
                 iconSize: 26,
                 onPressed: () {
                   setState(() {
@@ -364,7 +367,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                   return Text(
                     subjectName,
                     style: const TextStyle(
-                      color: Colors.black87,
+                      color: Colors.white,
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
                     ),
@@ -389,10 +392,10 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: const BoxDecoration(
-                                  color: Colors.black12,
+                                  color: Colors.white12,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.assignment_turned_in_rounded, color: Colors.black87),
+                                child: const Icon(Icons.assignment_turned_in_rounded, color: Colors.white),
                               ),
                               const SizedBox(width: 12),
                               Column(
@@ -402,14 +405,14 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                                     '$completed / $total topics',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w800,
-                                      color: Colors.black87,
+                                      color: Colors.white,
                                       fontSize: 20,
                                     ),
                                   ),
                                   Text(
                                     '${(ratio * 100).toStringAsFixed(0)}% Completed',
                                     style: const TextStyle(
-                                      color: Colors.black54,
+                                      color: Colors.white70,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
                                     ),
@@ -463,187 +466,96 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
               const SizedBox(height: 16),
 
               // Topics List
-              Expanded(
-                child: topicsAsync.when(
-                  data: (topics) {
-                    if (topics.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'No topics in this subject.',
-                              style: TextStyle(fontSize: 16, color: Colors.black54),
-                            ),
-                            const SizedBox(height: 8),
-                            if (_isEditing)
-                              ElevatedButton(
-                                onPressed: _showAddTopicDialog,
-                                child: const Text('Add First Topic'),
-                              ),
-                          ],
+              topicsAsync.when(
+                data: (topics) {
+                  if (topics.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: Text(
+                          'No topics in this subject.',
+                          style: TextStyle(fontSize: 16, color: AppColors.textGray),
                         ),
-                      );
-                    }
+                      ),
+                    );
+                  }
 
-                    // Grouping topics by chapter
-                    final Map<String, List<Topic>> chapters = {};
-                    for (final topic in topics) {
-                      final ch = topic.chapter.isEmpty ? 'General' : topic.chapter;
-                      chapters.putIfAbsent(ch, () => []).add(topic);
-                    }
-
-                    return ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24).copyWith(bottom: 100),
-                      children: chapters.entries.map((entry) {
-                        final chapterName = entry.key;
-                        final chapterTopics = entry.value;
-
-                        // Calculate completed count
-                        int completedCount = 0;
-                        for (final t in chapterTopics) {
-                          final progress = ref.watch(topicProgressProvider(t.id!));
-                          if (progress == ProgressStatus.completed) {
-                            completedCount++;
-                          }
+                  return FutureBuilder<List<Map<String, dynamic>>>(
+                    future: DatabaseHelper.instance.getTopicStrengthDetails(widget.subjectId),
+                    builder: (context, snapshot) {
+                      final strengthMap = <int, String>{};
+                      if (snapshot.hasData) {
+                        for (final d in snapshot.data!) {
+                          strengthMap[d['id'] as int] = d['strength'] as String;
                         }
-                        final totalCount = chapterTopics.length;
-                        final ratio = totalCount > 0 ? completedCount / totalCount : 0.0;
+                      }
 
+                      return ListView(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 24).copyWith(bottom: 100),
+                        children: topics.map((topic) {
+                          final strength = strengthMap[topic.id] ?? 'mid';
+                      if (_isEditing) {
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.darkSurface,
-                              borderRadius: BorderRadius.circular(AppRadius.card),
-                            ),
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Chapter Header
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        chapterName,
-                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.textWhite,
-                                            ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.neonPurple.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                                      ),
-                                      child: Text(
-                                        '$completedCount / $totalCount',
-                                        style: const TextStyle(
-                                          color: AppColors.neonPurple,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(2),
-                                  child: LinearProgressIndicator(
-                                    value: ratio,
-                                    backgroundColor: AppColors.darkBackground,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.neonPurple),
-                                    minHeight: 4,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                if (_isEditing)
-                                  ReorderableListView.builder(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    itemCount: chapterTopics.length,
-                                    onReorderItem: (oldIndex, newIndex) async {
-                                      final updatedList = List<Topic>.from(chapterTopics);
-                                      final item = updatedList.removeAt(oldIndex);
-                                      updatedList.insert(newIndex, item);
-
-                                      for (var idx = 0; idx < updatedList.length; idx++) {
-                                        await DatabaseHelper.instance.updateTopic(
-                                          updatedList[idx].copyWith(sortOrder: idx),
-                                        );
-                                      }
-                                      ref.invalidate(topicsBySubjectProvider(widget.subjectId));
-                                    },
-                                    itemBuilder: (context, idx) {
-                                      final topic = chapterTopics[idx];
-                                      return Container(
-                                        key: ValueKey(topic.id),
-                                        padding: const EdgeInsets.symmetric(vertical: 4),
-                                        child: Row(
-                                          children: [
-                                            const Icon(Icons.drag_indicator_rounded, color: Colors.black38, size: 20),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                topic.name,
-                                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                                      fontWeight: FontWeight.w500,
-                                                    ),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.edit_outlined, color: Colors.black54, size: 20),
-                                              onPressed: () => _showRenameDialog(topic),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                                              onPressed: () => _deleteTopic(topic),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  )
-                                else
-                                  ...chapterTopics.map((topic) {
-                                    final progressState = ref.watch(topicProgressProvider(topic.id!));
-                                    final noteCountAsync = ref.watch(topicNoteCountProvider(topic.id!));
-                                    final noteCount = noteCountAsync.valueOrNull ?? 0;
-                                    return ProgressGridItem(
-                                      label: topic.name,
-                                      completed: progressState == ProgressStatus.completed,
-                                      status: progressState,
-                                      noteCount: noteCount,
-                                      onTap: () {
-                                        ref
-                                            .read(topicProgressProvider(topic.id!).notifier)
-                                            .toggle(subjectId: widget.subjectId, paperId: paperId);
-                                      },
-                                      onNoteTap: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/topic-notes',
-                                          arguments: {'topicId': topic.id!, 'topicName': topic.name},
-                                        );
-                                      },
-                                    );
-                                  }),
-                              ],
-                            ),
+                          key: ValueKey(topic.id),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.drag_indicator_rounded, color: Colors.white54, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(topic.name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                              ),
+                              _StrengthBadge(strength, topicId: topic.id!, subjectId: widget.subjectId),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, color: Colors.white70, size: 20),
+                                onPressed: () => _showRenameDialog(topic),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                                onPressed: () => _deleteTopic(topic),
+                              ),
+                            ],
                           ),
                         );
-                      }).toList(),
-                    );
-                  },
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
-                ),
-              ),
+                      }
+                      final progressState = ref.watch(topicProgressProvider(topic.id!));
+                      final noteCountAsync = ref.watch(topicNoteCountProvider(topic.id!));
+                      final noteCount = noteCountAsync.valueOrNull ?? 0;
+                      return ProgressGridItem(
+                        label: topic.name,
+                        completed: progressState == ProgressStatus.completed,
+                        status: progressState,
+                        strength: strength,
+                        noteCount: noteCount,
+                        onTap: () {
+                          ref.read(topicProgressProvider(topic.id!).notifier)
+                              .toggle(subjectId: widget.subjectId, paperId: paperId);
+                        },
+                        onNoteTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/topic-notes',
+                            arguments: {'topicId': topic.id!, 'topicName': topic.name},
+                          );
+                        },
+                        onStrengthTap: () async {
+                          final next = strength == 'strong' ? 'mid' : strength == 'mid' ? 'weak' : 'auto';
+                          final newVal = next == 'auto' ? null : next;
+                          await DatabaseHelper.instance.setManualStrength(topic.id!, newVal);
+                          ref.invalidate(topicStrengthProvider(widget.subjectId));
+                          ref.invalidate(subjectProgressProvider(widget.subjectId));
+                        },
+                      );
+                    }).toList(),
+                  );
+                },
+              );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error: $e')),
+        ),
             ],
           ),
         ),
@@ -659,6 +571,57 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
               child: const Icon(Icons.add, color: AppColors.darkBackground),
             )
           : null,
+    );
+  }
+}
+
+class _StrengthBadge extends ConsumerWidget {
+  final String strength;
+  final int topicId;
+  final int subjectId;
+
+  const _StrengthBadge(this.strength, {required this.topicId, required this.subjectId});
+
+  String _next(String current) {
+    if (current == 'strong') return 'mid';
+    if (current == 'mid') return 'weak';
+    if (current == 'weak') return 'auto';
+    return 'strong';
+  }
+
+  Color _color(String s) {
+    switch (s) {
+      case 'strong': return const Color(0xFF4CAF50);
+      case 'mid': return Colors.orange;
+      case 'weak': return const Color(0xFFE57373);
+      default: return Colors.white38;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final display = strength;
+    final color = _color(display);
+
+    return GestureDetector(
+      onTap: () async {
+        final next = _next(display);
+        final newVal = next == 'auto' ? null : next;
+        await DatabaseHelper.instance.setManualStrength(topicId, newVal);
+        ref.invalidate(topicStrengthProvider(subjectId));
+        ref.invalidate(subjectProgressProvider(subjectId));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Text(
+          display,
+          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 }
@@ -755,7 +718,7 @@ class _LogStudyFormState extends ConsumerState<_LogStudyForm> {
                 selectedColor: AppColors.lavenderPurple,
                 backgroundColor: AppColors.cardWhite,
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black87,
+                  color: isSelected ? Colors.white : Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
@@ -773,7 +736,7 @@ class _LogStudyFormState extends ConsumerState<_LogStudyForm> {
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -791,9 +754,13 @@ class _LogStudyFormState extends ConsumerState<_LogStudyForm> {
                       durationMinutes: _selectedDuration,
                     );
                     await DatabaseHelper.instance.addSession(session);
-                    
-                    // Invalidate analytics so they update on next visit
                     ref.invalidate(studyHoursPerDayProvider(7));
+                    ref.invalidate(activityHeatmapProvider(DateTime.now().subtract(const Duration(days: 365))));
+                    ref.invalidate(weakTopicsProvider(ref.read(selectedPaperIdProvider)));
+                    ref.invalidate(totalStudyHoursProvider);
+                    ref.invalidate(totalStudySessionsCountProvider);
+                    ref.invalidate(currentStreakProvider);
+                    ref.invalidate(studySessionHistoryProvider);
 
                     if (context.mounted) {
                       Navigator.pop(context);

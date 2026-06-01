@@ -58,7 +58,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: Colors.black87,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: 12),
@@ -80,7 +80,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                   left: w * 16.0,
                   child: Text(
                     DateFormat('MMM').format(currentDay),
-                    style: const TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.bold),
                   ),
                 ));
                 lastMonth = currentDay.month;

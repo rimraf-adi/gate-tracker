@@ -81,16 +81,16 @@ class MockTestScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.analytics_outlined, size: 64, color: Colors.black38),
+                          Icon(Icons.analytics_outlined, size: 64, color: Colors.white54),
                           SizedBox(height: 12),
                           Text(
                             'No mock tests added yet.',
-                            style: TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.w600),
+                            style: TextStyle(fontSize: 16, color: Colors.white70, fontWeight: FontWeight.w600),
                           ),
                           SizedBox(height: 6),
                           Text(
                             'Tap the + button to add your first test!',
-                            style: TextStyle(fontSize: 14, color: Colors.black38),
+                            style: TextStyle(fontSize: 14, color: Colors.white54),
                           ),
                         ],
                       ),
@@ -171,7 +171,7 @@ class MockTestScreen extends ConsumerWidget {
               ),
               Text(
                 dateFormatted,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
               ),
             ],
           ),
@@ -189,7 +189,7 @@ class MockTestScreen extends ConsumerWidget {
               Text(
                 ' / ${test.totalMarks}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.black54,
+                      color: Colors.white70,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -219,11 +219,11 @@ class MockTestScreen extends ConsumerWidget {
             Row(
               children: [
                 if (test.percentile != null) ...[
-                  const Icon(Icons.percent_rounded, size: 16, color: Colors.black54),
+                  const Icon(Icons.percent_rounded, size: 16, color: Colors.white70),
                   const SizedBox(width: 4),
                   Text(
                     'Percentile: ${test.percentile!.toStringAsFixed(1)}',
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+                    style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
                   ),
                   const SizedBox(width: 20),
                 ],
@@ -232,7 +232,7 @@ class MockTestScreen extends ConsumerWidget {
                   const SizedBox(width: 4),
                   Text(
                     'Rank: #${test.rank}',
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+                    style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
                   ),
                 ],
               ],
@@ -404,7 +404,7 @@ class _AddTestFormState extends ConsumerState<_AddTestForm> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const SizedBox(width: 12),

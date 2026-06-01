@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../theme/app_theme.dart';
 import '../providers/providers.dart';
-import '../models/subject.dart';
-import '../services/database_helper.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/stats_ring.dart';
 import '../widgets/activity_heatmap.dart';
@@ -35,6 +33,9 @@ class AnalyticsScreen extends ConsumerWidget {
             ref.invalidate(aggregateProgressProvider(paperId));
             ref.invalidate(weakTopicsProvider(paperId));
             ref.invalidate(mockTestsByPaperProvider(paperId));
+            ref.invalidate(activityHeatmapProvider(DateTime.now().subtract(const Duration(days: 365))));
+            ref.invalidate(totalStudyHoursProvider);
+            ref.invalidate(totalStudySessionsCountProvider);
           },
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -46,8 +47,6 @@ class AnalyticsScreen extends ConsumerWidget {
               _SubjectRadarChart(),
               SizedBox(height: 24),
               _SyllabusProgress(),
-              SizedBox(height: 24),
-              _WeakSpots(),
               SizedBox(height: 24),
               _MockTrendChart(),
               SizedBox(height: 100),
@@ -272,117 +271,6 @@ class _SyllabusProgress extends ConsumerWidget {
   }
 }
 
-class _WeakSpots extends ConsumerWidget {
-  const _WeakSpots();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final paperId = ref.watch(selectedPaperIdProvider);
-    final weakAsync = ref.watch(weakTopicsProvider(paperId));
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '⚠️ Action Needed (Weak Spots)',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Topics studied but not yet completed for 7+ days.',
-            style: TextStyle(color: Colors.black45, fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          weakAsync.when(
-            data: (topics) {
-              if (topics.isEmpty) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.darkSurface,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.check_circle_rounded, color: AppColors.neonLime),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Looking strong! No weak spots detected.',
-                          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textWhite),
-                        ),
-                      )
-                    ],
-                  ),
-                );
-              }
-
-              return Column(
-                children: topics.map((t) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.darkSurface,
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.neonOrange.withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.warning_amber_rounded, color: AppColors.neonOrange, size: 20),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              t['name'] as String? ?? '',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textWhite,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.neonOrange.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(AppRadius.small),
-                            ),
-                            child: Text(
-                              '${t['days']} days stuck',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.neonOrange,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              );
-            },
-            loading: () => const SizedBox(height: 60, child: Center(child: CircularProgressIndicator())),
-            error: (e, _) => Center(child: Text('Error: $e')),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _MockTrendChart extends ConsumerWidget {
   const _MockTrendChart();
 
@@ -532,87 +420,97 @@ class _SubjectRadarChart extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final paperId = ref.watch(selectedPaperIdProvider);
-    final papersAsync = ref.watch(allPapersProvider);
+    final radarAsync = ref.watch(subjectStrengthRadarProvider(paperId));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Subject Mastery Radar',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Text('Subject Mastery', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const Spacer(),
+              _LegendDot(color: const Color(0xFF4CAF50), label: 'Strong'),
+              const SizedBox(width: 12),
+              _LegendDot(color: Colors.orange, label: 'Mid'),
+              const SizedBox(width: 12),
+              _LegendDot(color: const Color(0xFFE57373), label: 'Weak'),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Container(
-            decoration: BoxDecoration(
-              color: AppColors.darkSurface,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
+            decoration: BoxDecoration(color: AppColors.darkSurface, borderRadius: BorderRadius.circular(AppRadius.card)),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             child: SizedBox(
-              height: 220,
-              child: papersAsync.when(
-                data: (papers) {
-                  final paper = papers.firstWhere((p) => p.id == paperId, orElse: () => papers.first);
-                  final db = DatabaseHelper.instance;
-                  return FutureBuilder<List<Subject>>(
-                    future: db.getSubjectsByPaper(paper.id ?? 0),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                      final subjects = snapshot.data!;
-                      if (subjects.length < 3) {
-                        return const Center(child: Text('Need at least 3 subjects for radar chart', style: TextStyle(color: AppColors.textGray)));
-                      }
+              height: 280,
+              child: radarAsync.when(
+                data: (subjects) {
+                  if (subjects.length < 3) {
+                    return const Center(child: Text('Need at least 3 subjects', style: TextStyle(color: AppColors.textGray)));
+                  }
+                  // Build three datasets: strong, mid, weak
+                  final strongEntries = subjects.map((s) {
+                    final total = (s['total'] as int?) ?? 1;
+                    final val = ((s['strong'] as int?) ?? 0) / total * 100;
+                    return RadarEntry(value: val);
+                  }).toList();
 
-                      return FutureBuilder<List<double>>(
-                        future: Future.wait(subjects.map((s) async {
-                          final topics = await db.getTopicsBySubject(s.id ?? 0);
-                          if (topics.isEmpty) return 0.0;
-                          int completedCount = 0;
-                          for (final t in topics) {
-                            final prog = await db.getProgress(t.id ?? 0);
-                            if (prog != null && prog.status.name == 'completed') completedCount++;
-                          }
-                          return completedCount / topics.length;
-                        })),
-                        builder: (context, progressSnapshot) {
-                          if (!progressSnapshot.hasData) return const Center(child: CircularProgressIndicator());
-                          final progress = progressSnapshot.data!;
+                  final midEntries = subjects.map((s) {
+                    final total = (s['total'] as int?) ?? 1;
+                    final val = ((s['mid'] as int?) ?? 0) / total * 100;
+                    return RadarEntry(value: val);
+                  }).toList();
 
-                          return RadarChart(
-                            RadarChartData(
-                              dataSets: [
-                                RadarDataSet(
-                                  fillColor: AppColors.neonPurple.withValues(alpha: 0.2),
-                                  borderColor: AppColors.neonPurple,
-                                  entryRadius: 3,
-                                  dataEntries: progress.map((p) => RadarEntry(value: p * 100)).toList(),
-                                  borderWidth: 2,
-                                ),
-                              ],
-                              radarBackgroundColor: Colors.transparent,
-                              borderData: FlBorderData(show: false),
-                              radarBorderData: const BorderSide(color: Colors.white12),
-                              titlePositionPercentageOffset: 0.1,
-                              titleTextStyle: const TextStyle(color: AppColors.textWhite, fontSize: 10),
-                              getTitle: (index, angle) {
-                                final text = subjects[index].name;
-                                return RadarChartTitle(
-                                  text: text.length > 10 ? '${text.substring(0, 8)}..' : text,
-                                );
-                              },
-                              tickCount: 4,
-                              ticksTextStyle: const TextStyle(color: Colors.transparent, fontSize: 10),
-                              tickBorderData: const BorderSide(color: Colors.white12),
-                              gridBorderData: const BorderSide(color: Colors.white12, width: 2),
-                            ),
-                            swapAnimationDuration: const Duration(milliseconds: 150),
-                            swapAnimationCurve: Curves.linear,
-                          );
-                        },
-                      );
-                    },
+                  final weakEntries = subjects.map((s) {
+                    final total = (s['total'] as int?) ?? 1;
+                    final val = ((s['weak'] as int?) ?? 0) / total * 100;
+                    return RadarEntry(value: val);
+                  }).toList();
+
+                  final subjectNames = subjects.map((s) => s['name'] as String).toList();
+
+                  return RadarChart(
+                    RadarChartData(
+                      dataSets: [
+                        RadarDataSet(
+                          fillColor: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+                          borderColor: const Color(0xFF4CAF50),
+                          entryRadius: 3,
+                          dataEntries: strongEntries,
+                          borderWidth: 2,
+                        ),
+                        RadarDataSet(
+                          fillColor: Colors.orange.withValues(alpha: 0.15),
+                          borderColor: Colors.orange,
+                          entryRadius: 3,
+                          dataEntries: midEntries,
+                          borderWidth: 2,
+                        ),
+                        RadarDataSet(
+                          fillColor: const Color(0xFFE57373).withValues(alpha: 0.15),
+                          borderColor: const Color(0xFFE57373),
+                          entryRadius: 3,
+                          dataEntries: weakEntries,
+                          borderWidth: 2,
+                        ),
+                      ],
+                      radarBackgroundColor: Colors.transparent,
+                      borderData: FlBorderData(show: false),
+                      radarBorderData: const BorderSide(color: Colors.white12),
+                      titlePositionPercentageOffset: 0.15,
+                      titleTextStyle: const TextStyle(color: AppColors.textWhite, fontSize: 9),
+                      getTitle: (index, angle) {
+                        final text = subjectNames[index];
+                        return RadarChartTitle(text: text.length > 10 ? '${text.substring(0, 8)}..' : text);
+                      },
+                      tickCount: 4,
+                      ticksTextStyle: const TextStyle(color: Colors.transparent, fontSize: 10),
+                      tickBorderData: const BorderSide(color: Colors.white12),
+                      gridBorderData: const BorderSide(color: Colors.white12, width: 2),
+                    ),
+                    swapAnimationDuration: const Duration(milliseconds: 150),
+                    swapAnimationCurve: Curves.linear,
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -622,6 +520,24 @@ class _SubjectRadarChart extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+      ],
     );
   }
 }

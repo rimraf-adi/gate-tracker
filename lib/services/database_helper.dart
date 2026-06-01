@@ -30,7 +30,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onConfigure: _onConfigure,
       onUpgrade: _onUpgrade,
@@ -82,6 +82,9 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE topic_progress ADD COLUMN manual_strength TEXT');
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -123,6 +126,7 @@ class DatabaseHelper {
         topic_id INTEGER NOT NULL UNIQUE,
         status TEXT NOT NULL DEFAULT 'pending',
         last_updated TEXT,
+        manual_strength TEXT,
         FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE
       )
     ''');
@@ -430,7 +434,7 @@ class DatabaseHelper {
     return null;
   }
 
-  Future<void> setProgress(int topicId, ProgressStatus status) async {
+  Future<void> setProgress(int topicId, ProgressStatus status, {String? manualStrength}) async {
     final db = await instance.database;
     final nowStr = DateTime.now().toIso8601String();
     await db.insert(
@@ -439,6 +443,20 @@ class DatabaseHelper {
         'topic_id': topicId,
         'status': status.name,
         'last_updated': nowStr,
+        if (manualStrength != null) 'manual_strength': manualStrength,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> setManualStrength(int topicId, String? strength) async {
+    final db = await instance.database;
+    await db.insert(
+      'topic_progress',
+      {
+        'topic_id': topicId,
+        'status': 'pending',
+        'manual_strength': strength,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -448,6 +466,10 @@ class DatabaseHelper {
     final db = await instance.database;
     await db.delete('topic_progress');
     await db.delete('study_sessions');
+    await db.delete('topic_revisions');
+    await db.delete('scheduled_events');
+    await db.delete('mock_tests');
+    await db.delete('mock_test_subject_breakdown');
   }
 
   Future<void> deleteProgressForTopic(int topicId) async {
@@ -706,7 +728,7 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getPendingScheduledEventsOnDate(DateTime date) async {
     final db = await instance.database;
-    final dateStr = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    final dateStr = _dateToStr(date);
     final result = await db.rawQuery('''
       SELECT e.*, t.name as topic_name, s.name as subject_name
       FROM scheduled_events e
@@ -716,6 +738,41 @@ class DatabaseHelper {
       ORDER BY e.id ASC
     ''', [dateStr]);
     return result;
+  }
+
+  Future<List<Map<String, dynamic>>> getScheduledEventsInRange(DateTime start, DateTime end) async {
+    final db = await instance.database;
+    final startStr = _dateToStr(start);
+    final endStr = _dateToStr(end);
+    return await db.rawQuery('''
+      SELECT e.*, t.name as topic_name, s.name as subject_name, p.code as paper_code,
+             s.id as subject_id
+      FROM scheduled_events e
+      JOIN topics t ON e.topic_id = t.id
+      JOIN subjects s ON t.subject_id = s.id
+      JOIN papers p ON s.paper_id = p.id
+      WHERE substr(e.scheduled_date, 1, 10) >= ? AND substr(e.scheduled_date, 1, 10) <= ?
+      ORDER BY e.scheduled_date ASC, e.id ASC
+    ''', [startStr, endStr]);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllPendingScheduledWithDetails() async {
+    final db = await instance.database;
+    return await db.rawQuery('''
+      SELECT e.*, t.name as topic_name, s.name as subject_name, p.code as paper_code,
+             s.id as subject_id
+      FROM scheduled_events e
+      JOIN topics t ON e.topic_id = t.id
+      JOIN subjects s ON t.subject_id = s.id
+      JOIN papers p ON s.paper_id = p.id
+      WHERE e.is_completed = 0
+      ORDER BY e.scheduled_date ASC, e.id ASC
+    ''');
+  }
+
+  Future<void> toggleScheduledEvent(int id, bool completed) async {
+    final db = await instance.database;
+    await db.update('scheduled_events', {'is_completed': completed ? 1 : 0}, where: 'id = ?', whereArgs: [id]);
   }
 
   // --- HEATMAP ---
@@ -1046,6 +1103,92 @@ class DatabaseHelper {
       WHERE s.paper_id = ? AND tp.status = 'pending'
     ''', [paperId]);
     return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  /// Returns all study sessions with topic and subject names for history view
+  Future<List<Map<String, dynamic>>> getAllSessionsWithDetails() async {
+    final db = await instance.database;
+    return await db.rawQuery('''
+      SELECT ss.*, t.name as topic_name, s.name as subject_name, p.code as paper_code
+      FROM study_sessions ss
+      JOIN topics t ON ss.topic_id = t.id
+      JOIN subjects s ON t.subject_id = s.id
+      JOIN papers p ON s.paper_id = p.id
+      ORDER BY ss.date DESC
+    ''');
+  }
+
+  /// Returns {strong, mid, weak} counts for topics in a subject
+  Future<Map<String, int>> getTopicStrengthCounts(int subjectId) async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT tp.manual_strength FROM topics t
+      LEFT JOIN topic_progress tp ON t.id = tp.topic_id
+      WHERE t.subject_id = ?
+    ''', [subjectId]);
+
+    int strong = 0, mid = 0, weak = 0;
+    for (final row in result) {
+      final manual = row['manual_strength'] as String? ?? 'mid';
+      if (manual == 'strong') strong++;
+      else if (manual == 'weak') weak++;
+      else mid++;
+    }
+    return {'strong': strong, 'mid': mid, 'weak': weak};
+  }
+
+  /// Returns per-subject strong/mid/weak counts for radar chart
+  Future<List<Map<String, dynamic>>> getSubjectStrengthRadar(int paperId) async {
+    final db = await instance.database;
+    // Fully manual strength — no auto-computation
+    final result = await db.rawQuery('''
+      SELECT s.id, s.name as subject_name,
+        COUNT(t.id) as total,
+        SUM(CASE WHEN COALESCE(tp.manual_strength, 'mid') = 'strong' THEN 1 ELSE 0 END) as strong,
+        SUM(CASE WHEN COALESCE(tp.manual_strength, 'mid') = 'mid' THEN 1 ELSE 0 END) as mid,
+        SUM(CASE WHEN COALESCE(tp.manual_strength, 'mid') = 'weak' THEN 1 ELSE 0 END) as weak
+      FROM subjects s
+      LEFT JOIN topics t ON t.subject_id = s.id
+      LEFT JOIN topic_progress tp ON t.id = tp.topic_id
+      WHERE s.paper_id = ?
+      GROUP BY s.id
+      ORDER BY s.sort_order ASC
+    ''', [paperId]);
+
+    return result.map((row) => {
+      'id': row['id'] as int,
+      'name': row['subject_name'] as String,
+      'total': (row['total'] as int?) ?? 0,
+      'strong': (row['strong'] as int?) ?? 0,
+      'mid': (row['mid'] as int?) ?? 0,
+      'weak': (row['weak'] as int?) ?? 0,
+    }).toList();
+  }
+
+  /// Returns topic-wise strength labels for all topics in a subject
+  Future<List<Map<String, dynamic>>> getTopicStrengthDetails(int subjectId) async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT t.id, t.name, tp.status, tp.manual_strength
+      FROM topics t
+      LEFT JOIN topic_progress tp ON t.id = tp.topic_id
+      WHERE t.subject_id = ?
+      ORDER BY t.sort_order ASC
+    ''', [subjectId]);
+
+    final List<Map<String, dynamic>> details = [];
+    for (final row in result) {
+      final manual = row['manual_strength'] as String? ?? 'mid';
+      details.add({
+        'id': row['id'] as int,
+        'name': row['name'] as String,
+        'strength': manual,
+        'status': (row['status'] as String?) ?? 'pending',
+        'sessions': 0,
+        'last_studied': null,
+      });
+    }
+    return details;
   }
 
   String _todayDateStr() {
